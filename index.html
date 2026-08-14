@@ -13,8 +13,8 @@
   <style>
     :root {
       --bg-dark: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.82);
-      --card-border: rgba(255, 255, 255, 0.2);
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --card-border: #334155;
       --primary: #38bdf8;
       --accent-a: #fbbf24;
       --accent-b: #818cf8;
@@ -22,7 +22,7 @@
       --success: #22c55e;
       --danger: #ef4444;
       --text-light: #f8fafc;
-      --text-muted: #cbd5e1;
+      --text-muted: #94a3b8;
     }
 
     * {
@@ -44,21 +44,21 @@
 
     /* Header Bar */
     header {
-      background: rgba(15, 23, 42, 0.9);
+      background: #1e293b80;
       backdrop-filter: blur(8px);
       padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid var(--card-border);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       position: sticky;
       top: 0;
       z-index: 100;
     }
 
     .brand h1 {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 800;
       background: linear-gradient(135deg, #38bdf8, #818cf8);
       -webkit-background-clip: text;
@@ -68,13 +68,13 @@
     .stats-bar {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 1rem;
+      gap: 16px;
+      font-size: 1.1rem;
       font-weight: 600;
     }
 
     .stat-badge {
-      background: rgba(30, 41, 59, 0.9);
+      background: #1e293b;
       padding: 6px 14px;
       border-radius: 999px;
       border: 1px solid var(--card-border);
@@ -89,77 +89,39 @@
       border-color: var(--danger) !important;
     }
 
-    /* Main AR Screen Layout */
-    .ar-main-wrapper {
-      max-width: 1200px;
+    /* Layout Container */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1500px;
+      margin: 0 auto;
       width: 100%;
-      margin: 15px auto;
-      padding: 0 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
       flex-grow: 1;
     }
 
-    .ar-viewport {
-      position: relative;
-      width: 100%;
-      height: 72vh;
-      min-height: 520px;
-      background: #000;
-      border-radius: 24px;
-      overflow: hidden;
-      border: 2px solid var(--card-border);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    }
-
-    #webcam, #output_canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-
-    /* AR UI Overlay Elements */
-    .ar-overlay-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 10;
+    .question-panel {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 20px;
-      pointer-events: none; /* Let clicks pass through except on interactive cards */
+      gap: 16px;
     }
 
-    .ar-overlay-layer * {
-      pointer-events: auto;
-    }
-
-    /* Question Card on Top of Camera */
     .question-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
+      background: #1e293b;
       border: 2px solid var(--card-border);
-      border-radius: 18px;
-      padding: 16px 20px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      max-width: 850px;
-      margin: 0 auto;
-      width: 100%;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     }
 
     .difficulty-tag {
       display: inline-block;
-      padding: 2px 10px;
+      padding: 4px 12px;
       border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
       text-transform: uppercase;
     }
 
@@ -168,124 +130,68 @@
     .diff-hard { background: #9f1239; color: #fca5a5; }
 
     .question-text {
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       font-weight: 600;
+      line-height: 1.5;
       color: #ffffff;
     }
 
     .math-expr {
       font-size: 1.5rem;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--primary);
-      margin: 6px 0;
-      background: rgba(15, 23, 42, 0.6);
-      padding: 6px 16px;
+      margin: 12px 0;
+      background: #0f172a60;
+      padding: 10px 14px;
       border-radius: 8px;
-      display: inline-block;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      display: block;
+      text-align: center;
     }
 
-    .sub-question {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-    }
-
-    /* Options Grid on Bottom of Camera */
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      width: 100%;
-      max-width: 950px;
-      margin: 0 auto;
-    }
-
-    .option-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 3px solid var(--card-border);
-      border-radius: 18px;
-      padding: 14px 10px;
+    /* AR Viewport Container */
+    .camera-panel {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
+      gap: 12px;
+    }
+
+    .camera-wrapper {
       position: relative;
+      width: 100%;
+      height: 560px;
+      background: #000000;
+      border-radius: 20px;
       overflow: hidden;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      border: 3px solid var(--card-border);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
 
-    .option-card.card-a { border-color: rgba(251, 191, 36, 0.5); }
-    .option-card.card-b { border-color: rgba(129, 140, 248, 0.5); }
-    .option-card.card-c { border-color: rgba(244, 63, 94, 0.5); }
-
-    .option-card.detected {
-      transform: translateY(-6px) scale(1.02);
-      box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    #webcam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
     }
 
-    .option-card.card-a.detected { border-color: var(--accent-a); background: rgba(58, 46, 16, 0.9); }
-    .option-card.card-b.detected { border-color: var(--accent-b); background: rgba(30, 27, 75, 0.9); }
-    .option-card.card-c.detected { border-color: var(--accent-c); background: rgba(76, 5, 25, 0.9); }
-
-    .option-card.selected-correct {
-      border-color: var(--success) !important;
-      background: rgba(6, 78, 59, 0.95) !important;
-    }
-
-    .option-card.selected-wrong {
-      border-color: var(--danger) !important;
-      background: rgba(127, 29, 29, 0.95) !important;
-    }
-
-    .gesture-icon {
-      font-size: 2.2rem;
-      margin-bottom: 2px;
-    }
-
-    .option-label {
-      font-size: 1rem;
-      font-weight: 800;
-    }
-
-    .option-val {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #ffffff;
-      word-break: break-word;
-    }
-
-    .progress-bar-container {
+    #output_canvas {
       position: absolute;
-      bottom: 0;
+      top: 0;
       left: 0;
       width: 100%;
-      height: 8px;
-      background: rgba(255,255,255,0.15);
-    }
-
-    .progress-bar-fill {
       height: 100%;
-      width: 0%;
-      transition: width 0.05s linear;
+      transform: scaleX(-1);
+      z-index: 2;
     }
 
-    .card-a .progress-bar-fill { background: var(--accent-a); }
-    .card-b .progress-bar-fill { background: var(--accent-b); }
-    .card-c .progress-bar-fill { background: var(--accent-c); }
-
-    /* Camera Status Overlay Badges */
     .camera-status-badge {
       position: absolute;
       top: 15px;
-      left: 15px;
+      right: 15px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -305,60 +211,137 @@
 
     .detected-pose-badge {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      bottom: 15px;
+      left: 15px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 12px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 700;
       border: 1px solid var(--card-border);
       z-index: 20;
     }
 
-    /* Explanation Banner Floating Center */
-    .explanation-card {
+    /* AR Option Floating Cards */
+    .ar-option-card {
       position: absolute;
+      width: 220px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 3px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* Positioning requirement: A = Top Left, B = Bottom Right, C = Center */
+    .ar-option-card.pos-a {
+      top: 20px;
+      left: 20px;
+      border-color: rgba(251, 191, 36, 0.6);
+    }
+
+    .ar-option-card.pos-b {
+      bottom: 20px;
+      right: 20px;
+      border-color: rgba(129, 140, 248, 0.6);
+    }
+
+    .ar-option-card.pos-c {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 600px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
-      border: 2px solid var(--card-border);
-      border-radius: 20px;
-      padding: 20px 24px;
-      text-align: center;
-      display: none;
-      z-index: 30;
-      animation: fadeIn 0.3s ease;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      border-color: rgba(244, 63, 94, 0.6);
     }
 
-    .explanation-card.correct { border-color: var(--success); }
-    .explanation-card.wrong { border-color: var(--danger); }
+    .ar-option-card.detected {
+      transform: scale(1.06);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+    }
+
+    .ar-option-card.pos-c.detected {
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    .ar-option-card.pos-a.detected { border-color: var(--accent-a); background: rgba(58, 46, 16, 0.9); }
+    .ar-option-card.pos-b.detected { border-color: var(--accent-b); background: rgba(30, 27, 75, 0.9); }
+    .ar-option-card.pos-c.detected { border-color: var(--accent-c); background: rgba(76, 5, 25, 0.9); }
+
+    .ar-option-card.selected-correct {
+      border-color: var(--success) !important;
+      background: rgba(6, 78, 59, 0.95) !important;
+    }
+
+    .ar-option-card.selected-wrong {
+      border-color: var(--danger) !important;
+      background: rgba(127, 29, 29, 0.95) !important;
+    }
+
+    .option-label {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .option-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
+      word-break: break-word;
+    }
+
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 0 0 12px 12px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.04s linear;
+    }
+
+    .pos-a .progress-bar-fill { background: var(--accent-a); }
+    .pos-b .progress-bar-fill { background: var(--accent-b); }
+    .pos-c .progress-bar-fill { background: var(--accent-c); }
+
+    .explanation-card {
+      background: #1e293b;
+      border: 2px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .explanation-card.correct { border-color: var(--success); background: #064e3b40; }
+    .explanation-card.wrong { border-color: var(--danger); background: #7f1d1d40; }
 
     .exp-title {
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .btn-next {
-      background: linear-gradient(135deg, var(--primary), #0284c7);
-      color: #fff;
-      border: none;
-      padding: 10px 24px;
-      border-radius: 10px;
+      font-size: 1.1rem;
       font-weight: 700;
-      cursor: pointer;
-      margin-top: 14px;
-      font-size: 1rem;
+      margin-bottom: 6px;
     }
 
-    /* Modals & Debug */
+    /* Modal Overlays */
     .overlay-modal {
       position: fixed;
       inset: 0;
@@ -372,14 +355,14 @@
     }
 
     .modal-box {
-      background: rgba(30, 41, 59, 0.95);
+      background: #1e293b;
       border: 2px solid var(--card-border);
       border-radius: 24px;
       padding: 32px;
       max-width: 520px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
 
     .btn-primary {
@@ -400,6 +383,13 @@
       background: #334155;
       color: #64748b;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-primary:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
     }
 
     .btn-secondary {
@@ -415,14 +405,10 @@
       width: 100%;
     }
 
-    .debug-panel-wrapper {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .btn-secondary:hover { background: #334155; color: #fff; }
 
     .debug-toggle-btn {
-      background: rgba(30, 41, 59, 0.8);
+      background: #334155;
       color: #94a3b8;
       border: 1px solid var(--card-border);
       padding: 6px 12px;
@@ -435,14 +421,26 @@
       background: #020617;
       border: 1px dashed #475569;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       font-family: monospace;
       font-size: 0.75rem;
       color: #38bdf8;
       display: none;
       text-align: left;
       line-height: 1.4;
-      margin-top: 8px;
+    }
+
+    .btn-next {
+      background: #334155;
+      color: #fff;
+      border: 1px solid var(--card-border);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: stretch;
+      display: none;
     }
 
     @keyframes pulse {
@@ -451,23 +449,21 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translate(-50%, -45%); }
-      to { opacity: 1; transform: translate(-50%, -50%); }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 768px) {
-      .ar-viewport { height: 78vh; min-height: 480px; }
-      .options-grid { gap: 8px; }
-      .option-card { padding: 10px 4px; }
-      .gesture-icon { font-size: 1.6rem; }
-      .option-val { font-size: 1.1rem; }
-      .math-expr { font-size: 1.2rem; }
+    @media (max-width: 960px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .camera-wrapper { height: 440px; }
+      .ar-option-card { width: 160px; padding: 10px; }
+      .option-val { font-size: 1.3rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header Bar -->
+  <!-- Header Section -->
   <header>
     <div class="brand">
       <h1>REMAINDER AR</h1>
@@ -491,97 +487,95 @@
     </div>
   </header>
 
-  <!-- Main AR Viewport -->
-  <div class="ar-main-wrapper">
-    <div class="ar-viewport">
-      <!-- Camera Feed & Canvas -->
-      <video id="webcam" autoplay playsinline muted></video>
-      <canvas id="output_canvas"></canvas>
-
-      <!-- Status Badges -->
-      <div class="camera-status-badge">
-        <div class="status-dot" id="cam-status-dot"></div>
-        <span id="cam-status-text">กำลังโหลดกล้อง...</span>
+  <!-- Main Game Layout -->
+  <div class="main-layout">
+    
+    <!-- Question Panel (Left Side) -->
+    <div class="question-panel">
+      <div class="question-card">
+        <span id="difficulty-tag" class="difficulty-tag diff-easy">ระดับง่าย</span>
+        <div class="question-text" id="question-text">กำลังโหลดโจทย์...</div>
+        <div class="math-expr" id="math-expr">P(x) = ...</div>
+        <div style="font-size: 0.95rem; color: var(--text-muted);" id="sub-question">เศษเหลือจากการหารคือเท่าใด?</div>
       </div>
 
-      <div class="detected-pose-badge" id="detected-pose-badge">
-        ท่าทาง: -
-      </div>
-
-      <!-- AR UI Overlay -->
-      <div class="ar-overlay-layer">
-        
-        <!-- Question Card (Top) -->
-        <div class="question-card">
-          <span id="difficulty-tag" class="difficulty-tag diff-easy">ระดับง่าย</span>
-          <div class="question-text" id="question-text">กำลังโหลดโจทย์...</div>
-          <div class="math-expr" id="math-expr">P(x) = ...</div>
-          <div class="sub-question" id="sub-question">เศษเหลือจากการหารคือเท่าใด?</div>
-        </div>
-
-        <!-- Options Grid (Bottom) -->
-        <div class="options-grid">
-          <div class="option-card card-a" id="card-0" onclick="window.selectOptionManual(0)">
-            <div class="gesture-icon">🫲</div>
-            <div class="option-label" style="color: var(--accent-a);">A (มือซ้าย)</div>
-            <div class="option-val" id="opt-0-val">-</div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="fill-0"></div>
-            </div>
-          </div>
-
-          <div class="option-card card-b" id="card-1" onclick="window.selectOptionManual(1)">
-            <div class="gesture-icon">🫱</div>
-            <div class="option-label" style="color: var(--accent-b);">B (มือขวา)</div>
-            <div class="option-val" id="opt-1-val">-</div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="fill-1"></div>
-            </div>
-          </div>
-
-          <div class="option-card card-c" id="card-2" onclick="window.selectOptionManual(2)">
-            <div class="gesture-icon">🙌</div>
-            <div class="option-label" style="color: var(--accent-c);">C (สองมือ)</div>
-            <div class="option-val" id="opt-2-val">-</div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="fill-2"></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Explanation Popup Overlay (Center) -->
+      <!-- Explanation Banner -->
       <div class="explanation-card" id="explanation-card">
         <div class="exp-title" id="exp-title">🎉 ถูกต้อง!</div>
-        <div id="exp-detail" style="color: var(--text-light); line-height: 1.5; font-size: 0.95rem;"></div>
-        <button class="btn-next" id="btn-next" onclick="window.nextQuestion()">ข้อถัดไป ➔</button>
+        <div id="exp-detail" style="color: var(--text-light); line-height: 1.5; font-size: 0.9rem;"></div>
+      </div>
+
+      <button class="btn-next" id="btn-next" onclick="window.nextQuestion()">ข้อถัดไป ➔</button>
+
+      <button class="debug-toggle-btn" onclick="window.toggleTeacherDebug()">🛠 Teacher Debug Mode</button>
+      
+      <div class="debug-panel" id="debug-panel">
+        <div>FPS: <span id="db-fps">0</span></div>
+        <div>L Hand Touch: <span id="db-lh">-</span></div>
+        <div>R Hand Touch: <span id="db-rh">-</span></div>
+        <div>Hovered Card: <span id="db-hover">-</span></div>
+        <div>Selected Opt Index: <span id="db-sel">-1</span></div>
+        <div>Current Q Correct: <span id="db-correct">-</span></div>
       </div>
     </div>
 
-    <!-- Teacher Debug Bar -->
-    <div class="debug-panel-wrapper">
-      <button class="debug-toggle-btn" onclick="window.toggleTeacherDebug()">🛠 Teacher Debug Mode</button>
+    <!-- AR Camera Panel (Right Side - Main Interactive Screen) -->
+    <div class="camera-panel">
+      <div class="camera-wrapper" id="camera-wrapper">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="output_canvas"></canvas>
+
+        <!-- Floating AR Choice Cards Overlay -->
+        <!-- Choice A: Top Left -->
+        <div class="ar-option-card pos-a" id="card-0" onclick="window.selectOptionManual(0)">
+          <div class="option-label" style="color: var(--accent-a);">👈 คำตอบ A</div>
+          <div class="option-val" id="opt-0-val">-</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="fill-0"></div>
+          </div>
+        </div>
+
+        <!-- Choice C: Center -->
+        <div class="ar-option-card pos-c" id="card-2" onclick="window.selectOptionManual(2)">
+          <div class="option-label" style="color: var(--accent-c);">🎯 คำตอบ C</div>
+          <div class="option-val" id="opt-2-val">-</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="fill-2"></div>
+          </div>
+        </div>
+
+        <!-- Choice B: Bottom Right -->
+        <div class="ar-option-card pos-b" id="card-1" onclick="window.selectOptionManual(1)">
+          <div class="option-label" style="color: var(--accent-b);">👉 คำตอบ B</div>
+          <div class="option-val" id="opt-1-val">-</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="fill-1"></div>
+          </div>
+        </div>
+        
+        <div class="camera-status-badge">
+          <div class="status-dot" id="cam-status-dot"></div>
+          <span id="cam-status-text">กำลังโหลดกล้อง...</span>
+        </div>
+
+        <div class="detected-pose-badge" id="detected-pose-badge">
+          สถานะ: ยื่นมือแตะปุ่มคำตอบ
+        </div>
+      </div>
     </div>
-    <div class="debug-panel" id="debug-panel">
-      <div>FPS: <span id="db-fps">0</span> | Pose Conf: <span id="db-conf">0</span></div>
-      <div>L Wrist Y: <span id="db-lw">0</span> | L Shoulder Y: <span id="db-ls">0</span></div>
-      <div>R Wrist Y: <span id="db-rw">0</span> | R Shoulder Y: <span id="db-rs">0</span></div>
-      <div>Detected Pose: <span id="db-pose">NONE</span> | Selected Opt Index: <span id="db-sel">-1</span></div>
-      <div>Current Q Correct Index: <span id="db-correct">-</span></div>
-    </div>
+
   </div>
 
   <!-- Calibration Modal -->
   <div class="overlay-modal" id="calibration-modal">
     <div class="modal-box">
-      <h2 style="font-size: 1.8rem; margin-bottom: 12px; color: var(--primary);">เตรียมพร้อมเข้าสู่เกม AR</h2>
+      <h2 style="font-size: 1.8rem; margin-bottom: 12px; color: var(--primary);">วิธีการเล่นเกม AR Touch</h2>
       <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px;">
-        1. ยืนห่างจากกล้องประมาณ 1.5 - 3 เมตรให้เห็นลำตัวชัดเจน<br>
-        2. ลดมือลงทั้งสองข้างก่อนเริ่ม<br><br>
-        <strong>ท่าทางตอบคำถาม:</strong><br>
-        🫲 ยกมือซ้าย = เลือก A | 🫱 ยกมือขวา = เลือก B<br>
-        🙌 ยกสองมือ = เลือก C
+        1. ยืนห่างจากกล้องประมาณ 1.5 - 2.5 เมตร<br>
+        2. ใช้ **มือแตะปุ่มคำตอบ** บนหน้าจอกล้องค้างไว้ชั่วครู่:<br><br>
+        📍 <strong>คำตอบ A:</strong> แตะปุ่มมุมซ้ายบน<br>
+        📍 <strong>คำตอบ C:</strong> แตะปุ่มตรงกลาง<br>
+        📍 <strong>คำตอบ B:</strong> แตะปุ่มมุมขวาล่าง
       </p>
       
       <div id="calib-status-msg" style="color: var(--accent-a); font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">
@@ -589,6 +583,7 @@
       </div>
 
       <button class="btn-primary" id="btn-start-game" disabled onclick="window.startGame()">พร้อมแล้ว! เริ่มเล่นเลย</button>
+      
       <button class="btn-secondary" id="btn-retry-cam" style="display: none;" onclick="window.retryCamera()">🔄 ลองเชื่อมต่อกล้องใหม่</button>
       <button class="btn-secondary" onclick="window.bypassCamera()">🖱 เล่นโดยใช้การคลิกเลือก (ไม่ใช้กล้อง)</button>
     </div>
@@ -757,7 +752,7 @@
       return true;
     }
 
-    /* Game State Variables */
+    /* Game State */
     let gameState = {
       questions: [],
       currentIndex: 0,
@@ -767,9 +762,9 @@
       timerInterval: null,
       locked: false,
       isTeacherDebug: false,
-      currentDetectedPose: 'NONE',
-      poseStartTime: 0,
-      requiredHoldTimeMs: 700
+      currentHoveredCardIndex: -1,
+      touchStartTime: 0,
+      requiredHoldTimeMs: 600 // เวลาในการแตะค้าง 0.6 วินาที
     };
 
     let autoNextTimeout = null;
@@ -802,9 +797,8 @@
       const q = gameState.questions[gameState.currentIndex];
       gameState.locked = false;
 
-      // รีเซ็ตสถานะการจับท่าทาง
-      gameState.currentDetectedPose = 'NONE';
-      gameState.poseStartTime = 0;
+      gameState.currentHoveredCardIndex = -1;
+      gameState.touchStartTime = 0;
       resetHoldProgress();
 
       document.getElementById('q-counter').innerText = `${gameState.currentIndex + 1}/${gameState.questions.length}`;
@@ -820,11 +814,12 @@
       q.options.forEach((opt, idx) => {
         document.getElementById(`opt-${idx}-val`).innerText = opt.text;
         const card = document.getElementById(`card-${idx}`);
-        card.className = `option-card card-${idx === 0 ? 'a' : (idx === 1 ? 'b' : 'c')}`;
+        card.className = `ar-option-card ${idx === 0 ? 'pos-a' : (idx === 1 ? 'pos-b' : 'pos-c')}`;
         document.getElementById(`fill-${idx}`).style.width = '0%';
       });
 
       document.getElementById('explanation-card').style.display = 'none';
+      document.getElementById('btn-next').style.display = 'none';
 
       startTimer();
     }
@@ -920,6 +915,8 @@
       document.getElementById('exp-title').innerText = title;
       document.getElementById('exp-detail').innerText = detail;
       card.style.display = 'block';
+
+      document.getElementById('btn-next').style.display = 'block';
     }
 
     function nextQuestion() {
@@ -972,11 +969,12 @@
       document.getElementById('debug-panel').style.display = gameState.isTeacherDebug ? 'block' : 'none';
     }
 
-    /* MediaPipe Camera Setup */
+    /* MediaPipe Camera & Touch Detection Setup */
     let poseLandmarker;
     let video;
     let canvasElement;
     let canvasCtx;
+    let cameraWrapper;
     let lastVideoTime = -1;
     let lastFrameTime = performance.now();
     let fps = 0;
@@ -985,6 +983,7 @@
       video = document.getElementById('webcam');
       canvasElement = document.getElementById('output_canvas');
       canvasCtx = canvasElement.getContext('2d');
+      cameraWrapper = document.getElementById('camera-wrapper');
 
       const msg = document.getElementById('calib-status-msg');
       msg.innerText = "⏳ กำลังโหลดระบบ AI และเปิดใช้งานกล้อง...";
@@ -1039,8 +1038,8 @@
       fps = Math.round(1000 / (now - lastFrameTime));
       lastFrameTime = now;
 
-      canvasElement.width = video.videoWidth || 1280;
-      canvasElement.height = video.videoHeight || 720;
+      canvasElement.width = video.videoWidth || 640;
+      canvasElement.height = video.videoHeight || 480;
 
       if (poseLandmarker && video.currentTime !== lastVideoTime) {
         lastVideoTime = video.currentTime;
@@ -1049,42 +1048,75 @@
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-        let detectedPose = 'NONE';
-        let targetIndex = -1;
+        let activeTouchedCardIndex = -1;
+        let leftHandScreenPos = null;
+        let rightHandScreenPos = null;
 
         if (poseResults.landmarks && poseResults.landmarks.length > 0) {
           const landmarks = poseResults.landmarks[0];
           
-          const leftShoulder = landmarks[11];
-          const rightShoulder = landmarks[12];
-          const leftWrist = landmarks[15];
-          const rightWrist = landmarks[16];
+          // MediaPipe Pose Hand Indices:
+          // 15: Left Wrist, 19: Left Index Finger
+          // 16: Right Wrist, 20: Right Index Finger
+          const leftTarget = landmarks[19] || landmarks[15];
+          const rightTarget = landmarks[20] || landmarks[16];
 
-          const isLeftRaised = leftWrist && leftShoulder && (leftWrist.y < leftShoulder.y - 0.05);
-          const isRightRaised = rightWrist && rightShoulder && (rightWrist.y < rightShoulder.y - 0.05);
+          const wrapperRect = cameraWrapper.getBoundingClientRect();
 
-          if (isLeftRaised && isRightRaised) {
-            detectedPose = 'BOTH_RAISED'; // Option C
-            targetIndex = 2;
-          } else if (isLeftRaised) {
-            detectedPose = 'LEFT_RAISED'; // Option A
-            targetIndex = 0;
-          } else if (isRightRaised) {
-            detectedPose = 'RIGHT_RAISED'; // Option B
-            targetIndex = 1;
+          // คำนวณพิกัดบนหน้าจอ (เพราะกล้องถูก Mirror scaleX(-1) ดังนั้น Screen X = (1 - lm.x) * width)
+          if (leftTarget && leftTarget.visibility > 0.4) {
+            leftHandScreenPos = {
+              x: (1 - leftTarget.x) * wrapperRect.width,
+              y: leftTarget.y * wrapperRect.height,
+              rawX: leftTarget.x * canvasElement.width,
+              rawY: leftTarget.y * canvasElement.height
+            };
           }
 
-          drawSkeleton(landmarks);
+          if (rightTarget && rightTarget.visibility > 0.4) {
+            rightHandScreenPos = {
+              x: (1 - rightTarget.x) * wrapperRect.width,
+              y: rightTarget.y * wrapperRect.height,
+              rawX: rightTarget.x * canvasElement.width,
+              rawY: rightTarget.y * canvasElement.height
+            };
+          }
+
+          // ตรวจสอบการชน/แตะปุ่มคำตอบ A, B, C
+          const cardIndices = [0, 1, 2];
+          for (let idx of cardIndices) {
+            const cardElem = document.getElementById(`card-${idx}`);
+            if (!cardElem) continue;
+
+            const cardRect = cardElem.getBoundingClientRect();
+            const relLeft = cardRect.left - wrapperRect.left;
+            const relRight = cardRect.right - wrapperRect.left;
+            const relTop = cardRect.top - wrapperRect.top;
+            const relBottom = cardRect.bottom - wrapperRect.top;
+
+            const isLeftTouching = leftHandScreenPos && 
+              (leftHandScreenPos.x >= relLeft && leftHandScreenPos.x <= relRight &&
+               leftHandScreenPos.y >= relTop && leftHandScreenPos.y <= relBottom);
+
+            const isRightTouching = rightHandScreenPos && 
+              (rightHandScreenPos.x >= relLeft && rightHandScreenPos.x <= relRight &&
+               rightHandScreenPos.y >= relTop && rightHandScreenPos.y <= relBottom);
+
+            if (isLeftTouching || isRightTouching) {
+              activeTouchedCardIndex = idx;
+              break;
+            }
+          }
+
+          // วาดสเกเลตันและเป้าเล็งมือนักเรียน (AR Touch Cursor)
+          drawSkeletonAndTouchCursors(landmarks, leftHandScreenPos, rightHandScreenPos);
 
           if (gameState.isTeacherDebug) {
             document.getElementById('db-fps').innerText = fps;
-            document.getElementById('db-conf').innerText = poseResults.segmentationMasks ? 'High' : 'Normal';
-            document.getElementById('db-lw').innerText = leftWrist ? leftWrist.y.toFixed(2) : '-';
-            document.getElementById('db-ls').innerText = leftShoulder ? leftShoulder.y.toFixed(2) : '-';
-            document.getElementById('db-rw').innerText = rightWrist ? rightWrist.y.toFixed(2) : '-';
-            document.getElementById('db-rs').innerText = rightShoulder ? rightShoulder.y.toFixed(2) : '-';
-            document.getElementById('db-pose').innerText = detectedPose;
-            document.getElementById('db-sel').innerText = targetIndex;
+            document.getElementById('db-lh').innerText = leftHandScreenPos ? `${Math.round(leftHandScreenPos.x)},${Math.round(leftHandScreenPos.y)}` : 'None';
+            document.getElementById('db-rh').innerText = rightHandScreenPos ? `${Math.round(rightHandScreenPos.x)},${Math.round(rightHandScreenPos.y)}` : 'None';
+            document.getElementById('db-hover').innerText = activeTouchedCardIndex !== -1 ? `Card ${activeTouchedCardIndex}` : 'None';
+            document.getElementById('db-sel').innerText = activeTouchedCardIndex;
             
             const currentQ = gameState.questions[gameState.currentIndex];
             document.getElementById('db-correct').innerText = currentQ ? currentQ.correctOptionIndex : '-';
@@ -1093,24 +1125,22 @@
 
         canvasCtx.restore();
 
-        processPoseSelection(detectedPose, targetIndex);
+        // ประมวลผลการแตะค้างปุ่มคำตอบ
+        processTouchSelection(activeTouchedCardIndex);
       }
 
       requestAnimationFrame(predictWebcamFrame);
     }
 
-    function drawSkeleton(landmarks) {
+    function drawSkeletonAndTouchCursors(landmarks, leftPos, rightPos) {
       canvasCtx.fillStyle = "#38bdf8";
-      canvasCtx.strokeStyle = "#818cf8";
-      canvasCtx.lineWidth = 3;
+      canvasCtx.strokeStyle = "rgba(129, 140, 248, 0.5)";
+      canvasCtx.lineWidth = 2;
 
-      const connections = [
-        [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
-        [11, 23], [12, 24], [23, 24]
-      ];
-
-      connections.forEach(([i, j]) => {
-        if (landmarks[i] && landmarks[j]) {
+      // วาดเส้นข้อต่อแขน
+      const armConnections = [[11, 13], [13, 15], [12, 14], [14, 16], [11, 12]];
+      armConnections.forEach(([i, j]) => {
+        if (landmarks[i] && landmarks[j] && landmarks[i].visibility > 0.4 && landmarks[j].visibility > 0.4) {
           canvasCtx.beginPath();
           canvasCtx.moveTo(landmarks[i].x * canvasElement.width, landmarks[i].y * canvasElement.height);
           canvasCtx.lineTo(landmarks[j].x * canvasElement.width, landmarks[j].y * canvasElement.height);
@@ -1118,43 +1148,65 @@
         }
       });
 
-      landmarks.forEach((lm) => {
-        if (lm.visibility > 0.5) {
-          canvasCtx.beginPath();
-          canvasCtx.arc(lm.x * canvasElement.width, lm.y * canvasElement.height, 5, 0, 2 * Math.PI);
-          canvasCtx.fill();
-        }
-      });
+      // วาดเป้าเล็ง AR Touch Cursor ที่ปลายนิ้ว/ข้อมือซ้ายและขวา
+      if (leftPos) {
+        drawTouchTarget(leftPos.rawX, leftPos.rawY, '#fbbf24');
+      }
+      if (rightPos) {
+        drawTouchTarget(rightPos.rawX, rightPos.rawY, '#818cf8');
+      }
     }
 
-    function processPoseSelection(detectedPose, targetIndex) {
+    function drawTouchTarget(x, y, color) {
+      canvasCtx.save();
+      canvasCtx.fillStyle = color;
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.lineWidth = 3;
+
+      // วงกลมหลัก
+      canvasCtx.beginPath();
+      canvasCtx.arc(x, y, 16, 0, 2 * Math.PI);
+      canvasCtx.fill();
+      canvasCtx.stroke();
+
+      // วงแหวนเรืองแสงด้านนอก
+      canvasCtx.strokeStyle = color;
+      canvasCtx.lineWidth = 2;
+      canvasCtx.beginPath();
+      canvasCtx.arc(x, y, 26, 0, 2 * Math.PI);
+      canvasCtx.stroke();
+
+      canvasCtx.restore();
+    }
+
+    function processTouchSelection(touchedCardIndex) {
       const poseBadge = document.getElementById('detected-pose-badge');
-      let poseText = 'ไม่มีการค้างท่า';
-      if (detectedPose === 'LEFT_RAISED') poseText = '🫲 ยกมือซ้าย (A)';
-      if (detectedPose === 'RIGHT_RAISED') poseText = '🫱 ยกมือขวา (B)';
-      if (detectedPose === 'BOTH_RAISED') poseText = '🙌 ยกสองมือ (C)';
-      poseBadge.innerText = `ท่าทาง: ${poseText}`;
+      
+      if (touchedCardIndex === 0) poseBadge.innerText = '👉 กำลังแตะคำตอบ A (ซ้ายบน)';
+      else if (touchedCardIndex === 1) poseBadge.innerText = '👉 กำลังแตะคำตอบ B (ขวาล่าง)';
+      else if (touchedCardIndex === 2) poseBadge.innerText = '👉 กำลังแตะคำตอบ C (ตรงกลาง)';
+      else poseBadge.innerText = '✋ ยื่นมือแตะปุ่มคำตอบ A, B หรือ C';
 
       if (gameState.locked) return;
 
-      if (detectedPose !== 'NONE' && targetIndex !== -1) {
-        if (gameState.currentDetectedPose === detectedPose) {
-          const elapsedTime = performance.now() - gameState.poseStartTime;
+      if (touchedCardIndex !== -1) {
+        if (gameState.currentHoveredCardIndex === touchedCardIndex) {
+          const elapsedTime = performance.now() - gameState.touchStartTime;
           const progressPercent = Math.min(100, (elapsedTime / gameState.requiredHoldTimeMs) * 100);
 
-          updateCardHighlightAndFill(targetIndex, progressPercent);
+          updateCardHighlightAndFill(touchedCardIndex, progressPercent);
 
           if (elapsedTime >= gameState.requiredHoldTimeMs) {
-            handleAnswerSelection(targetIndex);
+            handleAnswerSelection(touchedCardIndex);
             resetHoldProgress();
           }
         } else {
-          gameState.currentDetectedPose = detectedPose;
-          gameState.poseStartTime = performance.now();
+          gameState.currentHoveredCardIndex = touchedCardIndex;
+          gameState.touchStartTime = performance.now();
           resetHoldProgress();
         }
       } else {
-        gameState.currentDetectedPose = 'NONE';
+        gameState.currentHoveredCardIndex = -1;
         resetHoldProgress();
       }
     }
@@ -1185,7 +1237,7 @@
       }
     }
 
-    // Bind Functions to Global Window Object
+    // Bind Functions to Global Window Object for HTML Event Handlers
     window.startGame = startGame;
     window.bypassCamera = bypassCamera;
     window.retryCamera = retryCamera;
