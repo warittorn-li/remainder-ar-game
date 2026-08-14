@@ -691,7 +691,7 @@
 
         combined.forEach(q => {
           let correctVal = (q.evalFunc) ? q.evalFunc(q.targetX) : q.correctVal;
-          if (typeof correctVal === 'number' && Number.isFloat(correctVal)) {
+          if (typeof correctVal === 'number' && !Number.isInteger(correctVal)) {
             correctVal = Math.round(correctVal * 100) / 100;
           }
 
@@ -985,13 +985,15 @@
       } catch (err) {
         console.error("Camera/AI Error:", err);
         document.getElementById('cam-status-dot').className = 'status-dot warning';
-        document.getElementById('cam-status-text').innerText = 'กล้องขัดข้อง';
-        
-        msg.innerText = "⚠️ ไม่สามารถเข้าถึงกล้องหรือ AI ได้ (กรุณาอนุญาตสิทธิ์กล้อง)";
-        msg.style.color = 'var(--danger)';
-        
+        document.getElementById('cam-status-text').innerText = 'ไม่สามารถเปิดกล้องได้';
+        msg.innerText = "❌ ไม่สามารถเข้าถึงกล้องได้ คุณยังสามารถเล่นโดยใช้การคลิกเลือกได้";
+        msg.style.color = "var(--danger)";
         document.getElementById('btn-retry-cam').style.display = 'block';
       }
+    }
+
+    function retryCamera() {
+      setupCameraAI();
     }
 
     async function predictWebcamFrame() {
@@ -999,118 +1001,141 @@
       fps = Math.round(1000 / (now - lastFrameTime));
       lastFrameTime = now;
 
-      if (video.videoWidth > 0 && canvasElement.width !== video.videoWidth) {
-        canvasElement.width = video.videoWidth;
-        canvasElement.height = video.videoHeight;
-      }
+      canvasElement.width = video.videoWidth || 640;
+      canvasElement.height = video.videoHeight || 480;
 
       if (poseLandmarker && video.currentTime !== lastVideoTime) {
         lastVideoTime = video.currentTime;
-        const poseResults = await poseLandmarker.detectForVideo(video, now);
+        const poseResults = poseLandmarker.detectForVideo(video, now);
 
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
+        let detectedPose = 'NONE';
+        let targetIndex = -1;
+
         if (poseResults.landmarks && poseResults.landmarks.length > 0) {
           const landmarks = poseResults.landmarks[0];
+          
+          // MediaPipe Pose Landmark Indices:
+          // 11: Left Shoulder, 12: Right Shoulder
+          // 15: Left Wrist,    16: Right Wrist
           const leftShoulder = landmarks[11];
           const rightShoulder = landmarks[12];
           const leftWrist = landmarks[15];
           const rightWrist = landmarks[16];
 
-          drawKeypoints(canvasCtx, [leftShoulder, rightShoulder, leftWrist, rightWrist]);
+          // Check if hands are raised above shoulder level (Y goes 0 at top to 1 at bottom)
+          const isLeftRaised = leftWrist && leftShoulder && (leftWrist.y < leftShoulder.y - 0.05);
+          const isRightRaised = rightWrist && rightShoulder && (rightWrist.y < rightShoulder.y - 0.05);
 
-          const threshold = 0.06;
-          const isLeftRaised = leftWrist.y < (leftShoulder.y - threshold);
-          const isRightRaised = rightWrist.y < (rightShoulder.y - threshold);
-
-          let detectedPose = 'NONE';
           if (isLeftRaised && isRightRaised) {
-            detectedPose = 'C';
+            detectedPose = 'BOTH_RAISED'; // Option C
+            targetIndex = 2;
           } else if (isLeftRaised) {
-            detectedPose = 'A';
+            detectedPose = 'LEFT_RAISED'; // Option A
+            targetIndex = 0;
           } else if (isRightRaised) {
-            detectedPose = 'B';
+            detectedPose = 'RIGHT_RAISED'; // Option B
+            targetIndex = 1;
           }
 
-          processPoseSmoothing(detectedPose, now);
+          // Draw skeleton points on canvas
+          drawSkeleton(landmarks);
 
+          // Update debug info
           if (gameState.isTeacherDebug) {
             document.getElementById('db-fps').innerText = fps;
-            document.getElementById('db-conf').innerText = leftShoulder.visibility ? leftShoulder.visibility.toFixed(2) : 'N/A';
-            document.getElementById('db-lw').innerText = leftWrist.y.toFixed(2);
-            document.getElementById('db-ls').innerText = leftShoulder.y.toFixed(2);
-            document.getElementById('db-rw').innerText = rightWrist.y.toFixed(2);
-            document.getElementById('db-rs').innerText = rightShoulder.y.toFixed(2);
+            document.getElementById('db-conf').innerText = poseResults.segmentationMasks ? 'High' : 'Normal';
+            document.getElementById('db-lw').innerText = leftWrist ? leftWrist.y.toFixed(2) : '-';
+            document.getElementById('db-ls').innerText = leftShoulder ? leftShoulder.y.toFixed(2) : '-';
+            document.getElementById('db-rw').innerText = rightWrist ? rightWrist.y.toFixed(2) : '-';
+            document.getElementById('db-rs').innerText = rightShoulder ? rightShoulder.y.toFixed(2) : '-';
             document.getElementById('db-pose').innerText = detectedPose;
-            document.getElementById('db-sel').innerText = gameState.currentIndex;
-            document.getElementById('db-correct').innerText = gameState.questions[gameState.currentIndex]?.correctOptionIndex;
+            document.getElementById('db-sel').innerText = targetIndex;
+            
+            const currentQ = gameState.questions[gameState.currentIndex];
+            document.getElementById('db-correct').innerText = currentQ ? currentQ.correctOptionIndex : '-';
           }
-        } else {
-          processPoseSmoothing('NONE', now);
         }
 
         canvasCtx.restore();
+
+        // Process detected pose & progress timer
+        processPoseSelection(detectedPose, targetIndex);
       }
 
       requestAnimationFrame(predictWebcamFrame);
     }
 
-    function drawKeypoints(ctx, points) {
-      points.forEach(p => {
-        if (!p) return;
-        ctx.beginPath();
-        ctx.arc(p.x * canvasElement.width, p.y * canvasElement.height, 8, 0, 2 * Math.PI);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
+    function drawSkeleton(landmarks) {
+      canvasCtx.fillStyle = "#38bdf8";
+      canvasCtx.strokeStyle = "#818cf8";
+      canvasCtx.lineWidth = 3;
+
+      const connections = [
+        [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // Upper body
+        [11, 23], [12, 24], [23, 24]                      // Torso
+      ];
+
+      connections.forEach(([i, j]) => {
+        if (landmarks[i] && landmarks[j]) {
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(landmarks[i].x * canvasElement.width, landmarks[i].y * canvasElement.height);
+          canvasCtx.lineTo(landmarks[j].x * canvasElement.width, landmarks[j].y * canvasElement.height);
+          canvasCtx.stroke();
+        }
+      });
+
+      landmarks.forEach((lm) => {
+        if (lm.visibility > 0.5) {
+          canvasCtx.beginPath();
+          canvasCtx.arc(lm.x * canvasElement.width, lm.y * canvasElement.height, 5, 0, 2 * Math.PI);
+          canvasCtx.fill();
+        }
       });
     }
 
-    function processPoseSmoothing(detectedPose, currentTime) {
-      const badge = document.getElementById('detected-pose-badge');
-      
-      if (detectedPose !== gameState.currentDetectedPose) {
-        gameState.currentDetectedPose = detectedPose;
-        gameState.poseStartTime = currentTime;
-        resetCardHighlights();
-      }
+    function processPoseSelection(detectedPose, targetIndex) {
+      const poseBadge = document.getElementById('detected-pose-badge');
+      let poseText = 'ไม่มีการค้างท่า';
+      if (detectedPose === 'LEFT_RAISED') poseText = '🫲 ยกมือซ้าย (A)';
+      if (detectedPose === 'RIGHT_RAISED') poseText = '🫱 ยกมือขวา (B)';
+      if (detectedPose === 'BOTH_RAISED') poseText = '🙌 ยกสองมือ (C)';
+      poseBadge.innerText = `ท่าทาง: ${poseText}`;
 
-      if (detectedPose === 'NONE' || gameState.locked) {
-        badge.innerText = `ท่าทาง: ${gameState.locked ? '🔒 ล็อกคำตอบแล้ว' : '-'}`;
-        resetCardHighlights();
-        return;
-      }
+      if (gameState.locked) return;
 
-      const heldDuration = currentTime - gameState.poseStartTime;
-      const progressPercent = Math.min(100, (heldDuration / gameState.requiredHoldTimeMs) * 100);
+      if (detectedPose !== 'NONE' && targetIndex !== -1) {
+        if (gameState.currentDetectedPose === detectedPose) {
+          const elapsedTime = performance.now() - gameState.poseStartTime;
+          const progressPercent = Math.min(100, (elapsedTime / gameState.requiredHoldTimeMs) * 100);
 
-      let optIndex = -1;
-      if (detectedPose === 'A') optIndex = 0;
-      if (detectedPose === 'B') optIndex = 1;
-      if (detectedPose === 'C') optIndex = 2;
+          updateCardHighlightAndFill(targetIndex, progressPercent);
 
-      badge.innerText = `ท่าทาง: ${detectedPose} (ค้างท่า... ${Math.round(progressPercent)}%)`;
-
-      if (optIndex !== -1) {
-        highlightCardProgress(optIndex, progressPercent);
-
-        if (heldDuration >= gameState.requiredHoldTimeMs && !gameState.locked) {
-          handleAnswerSelection(optIndex);
+          if (elapsedTime >= gameState.requiredHoldTimeMs) {
+            handleAnswerSelection(targetIndex);
+            resetHoldProgress();
+          }
+        } else {
+          gameState.currentDetectedPose = detectedPose;
+          gameState.poseStartTime = performance.now();
+          resetHoldProgress();
         }
+      } else {
+        gameState.currentDetectedPose = 'NONE';
+        resetHoldProgress();
       }
     }
 
-    function highlightCardProgress(optIndex, percent) {
+    function updateCardHighlightAndFill(selectedIndex, fillPercent) {
       for (let i = 0; i < 3; i++) {
         const card = document.getElementById(`card-${i}`);
         const fill = document.getElementById(`fill-${i}`);
 
-        if (i === optIndex) {
+        if (i === selectedIndex) {
           card.classList.add('detected');
-          fill.style.width = `${percent}%`;
+          fill.style.width = `${fillPercent}%`;
         } else {
           card.classList.remove('detected');
           fill.style.width = '0%';
@@ -1118,31 +1143,27 @@
       }
     }
 
-    function resetCardHighlights() {
+    function resetHoldProgress() {
       for (let i = 0; i < 3; i++) {
         const card = document.getElementById(`card-${i}`);
         const fill = document.getElementById(`fill-${i}`);
-        if (!card.classList.contains('selected-correct') && !card.classList.contains('selected-wrong')) {
-          card.classList.remove('detected');
-        }
+        card.classList.remove('detected');
         fill.style.width = '0%';
       }
     }
 
-    // Attach Handlers to Window Object for HTML Events
+    // Bind Functions to Global Window Object for HTML Event Handlers
     window.startGame = startGame;
-    window.restartGame = restartGame;
-    window.nextQuestion = nextQuestion;
-    window.selectOptionManual = selectOptionManual;
-    window.toggleTeacherDebug = toggleTeacherDebug;
-    window.retryCamera = setupCameraAI;
     window.bypassCamera = bypassCamera;
+    window.retryCamera = retryCamera;
+    window.selectOptionManual = selectOptionManual;
+    window.nextQuestion = nextQuestion;
+    window.restartGame = restartGame;
+    window.toggleTeacherDebug = toggleTeacherDebug;
 
-    // Start App
-    window.addEventListener('load', () => {
-      initGameEngine();
-      setupCameraAI();
-    });
+    // Initialization on Page Load
+    initGameEngine();
+    setupCameraAI();
   </script>
 </body>
 </html>
