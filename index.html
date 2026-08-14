@@ -3,28 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>REMAINDER AR v3</title>
+<title>REMAINDER AR v4</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#06101d;color:#f8fafc;font-family:system-ui,"Noto Sans Thai",sans-serif}.wrap{max-width:1200px;margin:auto;padding:18px}
 .head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}h1{margin:0;color:#67e8f9;font-size:clamp(28px,4vw,46px)}h2{font-size:clamp(22px,3vw,34px)}
 .panel{background:#0c1b2c;border:1px solid #25435b;border-radius:22px;padding:22px;box-shadow:0 15px 45px #0008}.center{text-align:center}.screen{display:none}.screen.on{display:block}
 .status{padding:9px 13px;border-radius:12px;background:#091727}.ok{color:#86efac}.warn{color:#fde68a}.err{color:#fca5a5}
-.btn{border:0;border-radius:14px;padding:13px 22px;background:#14b8a6;color:#001313;font-size:18px;font-weight:900;cursor:pointer;margin:5px}.btn.alt{background:#263b52;color:#fff}
-.instructions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.pose{padding:16px;border:1px solid #294a64;border-radius:16px;background:#091727}.key{font-size:30px;color:#67e8f9;font-weight:900}
-.muted{color:#9fb2c8;line-height:1.6}.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:18px}.question{font-size:clamp(22px,3vw,34px);line-height:1.55;margin-bottom:18px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice{border:1px solid #2b4862;border-radius:14px;padding:14px;font-size:20px}.choice b{color:#67e8f9}
+.btn{border:0;border-radius:14px;padding:13px 22px;background:#14b8a6;color:#001313;font-size:18px;font-weight:900;cursor:pointer;margin:5px}.btn:disabled{opacity:.6;cursor:wait}
+.instructions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.pose{padding:16px;border:1px solid #294a64;border-radius:16px;background:#091727}.key{font-size:30px;color:#67e8f9;font-weight:900}.muted{color:#9fb2c8;line-height:1.6}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:18px}.question{font-size:clamp(22px,3vw,34px);line-height:1.55;margin-bottom:18px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice{border:1px solid #2b4862;border-radius:14px;padding:14px;font-size:20px}.choice b{color:#67e8f9}
 .camera{position:relative;aspect-ratio:4/3;background:#02070d;border:2px solid #1d5363;border-radius:18px;overflow:hidden}.camera video,.camera canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}.camera canvas{z-index:2}.tag{position:absolute;z-index:3;top:10px;left:10px;background:#000a;border-radius:10px;padding:8px 12px}.poseDetected{position:absolute;z-index:3;bottom:10px;left:10px;right:10px;background:#000a;border-radius:10px;padding:9px;text-align:center}
 .stats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.stat{padding:9px 13px;border-radius:12px;background:#091727}.bar{height:10px;background:#18283a;border-radius:99px;overflow:hidden}.fill{height:100%;background:#2dd4bf;width:0}.feedback{margin-top:16px;padding:14px;border-radius:14px;min-height:72px;background:#091727}.good{border:1px solid #16853d;color:#bbf7d0}.bad{border:1px solid #9f2828;color:#fecaca}.hidden{display:none!important}input{padding:13px;border-radius:12px;border:1px solid #34536c;background:#071321;color:#fff;font-size:18px;width:min(420px,90%)}.big{font-size:70px;color:#67e8f9;font-weight:900}
-#debug{margin-top:14px;text-align:left;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;background:#02070d;border-radius:12px;padding:12px;max-height:170px;overflow:auto;white-space:pre-wrap}
+#debug{margin-top:14px;text-align:left;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;background:#02070d;border-radius:12px;padding:12px;max-height:180px;overflow:auto;white-space:pre-wrap}
 @media(max-width:820px){.grid{grid-template-columns:1fr}.instructions{grid-template-columns:1fr 1fr}.choices{grid-template-columns:1fr}}
 </style>
+
+<!--
+  MediaPipe is loaded as a normal module script, not with dynamic import().
+  This avoids the exact "Failed to fetch dynamically imported module" error
+  seen in v3. Version 0.10.35 is pinned for reproducibility.
+-->
+<script type="module">
+import { PoseLandmarker, FilesetResolver } from
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
+window.MediaPipeVision = { PoseLandmarker, FilesetResolver };
+window.dispatchEvent(new Event("mediapipe-ready"));
+</script>
 </head>
 <body>
 <div class="wrap">
-<header class="head"><div><h1>REMAINDER AR</h1><div class="muted">ภารกิจนักล่าเศษเหลือ • ม.4 • v3</div></div><div id="topStatus" class="status warn">พร้อมเริ่ม</div></header>
+<header class="head">
+<div><h1>REMAINDER AR</h1><div class="muted">ภารกิจนักล่าเศษเหลือ • ม.4 • v4</div></div>
+<div id="topStatus" class="status warn">กำลังเตรียมระบบ…</div>
+</header>
 
 <section id="start" class="screen on panel center" style="margin-top:20px">
-<div class="big">🧮</div><h2>ใช้ร่างกายพิชิตทฤษฎีบทเศษเหลือ!</h2>
-<p class="muted">v3 เพิ่มระบบตรวจสอบการโหลด AI และแสดงข้อผิดพลาดบนหน้าเว็บ เพื่อแก้ปัญหากด START แล้วไม่เปลี่ยนหน้า</p>
+<div class="big">🧮</div>
+<h2>ใช้ร่างกายพิชิตทฤษฎีบทเศษเหลือ!</h2>
+<p class="muted">v4 แก้ปัญหาโหลด MediaPipe โดยใช้ module script โดยตรงและล็อกเวอร์ชันไลบรารี</p>
 <input id="studentName" placeholder="ชื่อนักเรียน (ไม่บังคับ)">
 <div class="instructions">
 <div class="pose"><div class="key">🫲 A</div><div>ยกมือซ้ายเหนือไหล่</div></div>
@@ -32,25 +48,28 @@
 <div class="pose"><div class="key">🙌 C</div><div>ยกสองมือเหนือไหล่</div></div>
 <div class="pose"><div class="key">🧎 D</div><div>ย่อตัว</div></div>
 </div>
-<button id="startBtn" class="btn">START GAME</button>
-<div id="debug">ระบบพร้อม — กด START GAME เพื่อเริ่มตรวจสอบ AI และกล้อง</div>
+<button id="startBtn" class="btn" disabled>กำลังโหลดระบบ…</button>
+<div id="debug">รอ MediaPipe…</div>
 </section>
 
 <section id="game" class="screen" style="margin-top:20px">
 <div class="stats"><div class="stat">ด่าน <b id="level">1</b></div><div class="stat">ข้อ <b id="qno">1/15</b></div><div class="stat">คะแนน <b id="score">0</b></div><div class="stat">❤️ <b id="hearts">3</b></div><div class="stat">⏱ <b id="timer">10</b></div></div>
 <div class="bar"><div id="progress" class="fill"></div></div>
-<div class="grid"><div class="panel"><div id="question" class="question"></div><div id="choices" class="choices"></div><div id="feedback" class="feedback">รอการตอบ…</div><button id="nextBtn" class="btn hidden">ข้อต่อไป →</button></div>
-<div class="camera"><video id="video" autoplay muted playsinline></video><canvas id="canvas"></canvas><div id="camTag" class="tag">กล้อง: รอเริ่ม</div><div id="poseDetected" class="poseDetected">แสดงท่าตอบ A / B / C / D</div></div></div>
+<div class="grid">
+<div class="panel"><div id="question" class="question"></div><div id="choices" class="choices"></div><div id="feedback" class="feedback">รอการตอบ…</div><button id="nextBtn" class="btn hidden">ข้อต่อไป →</button></div>
+<div class="camera"><video id="video" autoplay muted playsinline></video><canvas id="canvas"></canvas><div id="camTag" class="tag">กล้อง: รอเริ่ม</div><div id="poseDetected" class="poseDetected">แสดงท่าตอบ A / B / C / D</div></div>
+</div>
 </section>
 
-<section id="result" class="screen panel center" style="margin-top:20px"><div class="big">🏆</div><h2>MISSION COMPLETE!</h2><p id="playerResult"></p><h2>คะแนน <span id="finalScore">0</span></h2><p>ตอบถูก <b id="correctCount">0</b> / 15 ข้อ</p><h3 id="rank"></h3><button id="againBtn" class="btn">เล่นอีกครั้ง</button></section>
+<section id="result" class="screen panel center" style="margin-top:20px">
+<div class="big">🏆</div><h2>MISSION COMPLETE!</h2><p id="playerResult"></p><h2>คะแนน <span id="finalScore">0</span></h2><p>ตอบถูก <b id="correctCount">0</b> / 15 ข้อ</p><h3 id="rank"></h3><button id="againBtn" class="btn">เล่นอีกครั้ง</button>
+</section>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 const MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-const WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
-const CDN="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs";
+const WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
 const Q=[
 ["P(x)=x²+3x+5 หารด้วย x−2 เศษเหลือเท่าใด?",["10","12","15","18"],2,"P(2)=4+6+5=15"],
 ["P(x)=x²−4x+7 หารด้วย x−1 เศษเหลือเท่าใด?",["2","4","5","7"],1,"P(1)=1−4+7=4"],
@@ -68,45 +87,65 @@ const Q=[
 ["P(x)=2x²+kx+3 หารด้วย x−1 เหลือเศษ 6 แล้ว k เท่ากับเท่าใด?",["0","1","2","3"],1,"P(1)=6 ⇒ 2+k+3=6 ⇒ k=1"],
 ["P(x)=x²+kx+6 หารด้วย x−2 เหลือเศษ 4 แล้ว k เท่ากับเท่าใด?",["−4","−3","3","4"],1,"P(2)=4 ⇒ 4+2k+6=4 ⇒ k=−3"]
 ];
-let api=null,pose=null,stream=null,lastVideoTime=-1,idx=0,score=0,correct=0,hearts=3,t=10,timerId=null,locked=false,lastPose=null,poseSince=0;
+
+let PoseLandmarker=null,FilesetResolver=null,landmarker=null,stream=null,lastVideoTime=-1,idx=0,score=0,correct=0,hearts=3,t=10,timerId=null,locked=false,lastPose=null,poseSince=0;
+
 function log(s){$("debug").textContent+=`\\n${new Date().toLocaleTimeString()}  ${s}`;$("debug").scrollTop=$("debug").scrollHeight}
 function status(s,c="warn"){$("topStatus").textContent=s;$("topStatus").className="status "+c;log(s)}
-function wait(ms){return new Promise(r=>setTimeout(r,ms))}
-async function importMediaPipe(){
- status("กำลังเชื่อมต่อ MediaPipe…");
- log("Import: "+CDN);
- const mod=await import(CDN+"?v=3");
- if(!mod.PoseLandmarker||!mod.FilesetResolver)throw new Error("โหลด MediaPipe ได้ แต่ไม่พบ PoseLandmarker/FilesetResolver");
- return mod;
-}
+
+window.addEventListener("error",e=>log("JS ERROR: "+e.message));
+window.addEventListener("unhandledrejection",e=>log("PROMISE ERROR: "+(e.reason?.message||e.reason)));
+
+window.addEventListener("mediapipe-ready",()=>{
+  if(window.MediaPipeVision){
+    ({PoseLandmarker,FilesetResolver}=window.MediaPipeVision);
+    $("startBtn").disabled=false;
+    $("startBtn").textContent="START GAME";
+    status("MediaPipe โหลดสำเร็จ — พร้อมเริ่ม","ok");
+    log("MediaPipe 0.10.35 ready");
+  }
+});
+
+setTimeout(()=>{
+  if(!$("startBtn").disabled && window.MediaPipeVision) return;
+  if(!window.MediaPipeVision){
+    status("MediaPipe โหลดไม่สำเร็จ","err");
+    log("ถ้าเห็นข้อความนี้ ให้ตรวจว่าเครือข่ายโรงเรียนอนุญาต cdn.jsdelivr.net");
+    $("startBtn").disabled=false;
+    $("startBtn").textContent="ลองเริ่มใหม่";
+  }
+},15000);
+
 async function loadAI(){
- const mod=await importMediaPipe();
- status("กำลังโหลด WASM…");
- const vision=await Promise.race([
-  mod.FilesetResolver.forVisionTasks(WASM),
-  new Promise((_,rej)=>setTimeout(()=>rej(new Error("WASM โหลดเกิน 20 วินาที")),20000))
- ]);
- status("กำลังสร้าง AI Pose…");
- pose=await Promise.race([
-  mod.PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:MODEL},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5}),
-  new Promise((_,rej)=>setTimeout(()=>rej(new Error("โมเดล Pose โหลดเกิน 30 วินาที")),30000))
- ]);
- status("AI พร้อมแล้ว","ok");
+  status("กำลังโหลด WASM…");
+  const vision=await FilesetResolver.forVisionTasks(WASM);
+  status("กำลังสร้าง Pose AI…");
+  landmarker=await PoseLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:MODEL,delegate:"CPU"},
+    runningMode:"VIDEO",numPoses:1,
+    minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5
+  });
+  status("Pose AI พร้อมแล้ว","ok");
 }
 async function openCamera(){
- status("กำลังขอสิทธิ์กล้อง…");
- if(!window.isSecureContext)throw new Error("หน้าเว็บไม่ใช่ HTTPS");
- if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("เบราว์เซอร์ไม่รองรับ getUserMedia");
- stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
- $("video").srcObject=stream;await $("video").play();$("camTag").textContent="กล้อง: พร้อม";status("กล้องพร้อม — เริ่มเกม","ok");requestAnimationFrame(loop);
+  status("กำลังขอสิทธิ์กล้อง…");
+  if(!window.isSecureContext)throw new Error("หน้านี้ไม่ใช่ HTTPS");
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error("Chrome ไม่รองรับกล้อง");
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
+  $("video").srcObject=stream;
+  await $("video").play();
+  $("camTag").textContent="กล้อง: พร้อม";
+  status("กล้องพร้อม — เริ่มเกม","ok");
+  requestAnimationFrame(loop);
 }
 function loop(){
  const v=$("video"),c=$("canvas"),ctx=c.getContext("2d");
- if(pose&&v.readyState>=2&&v.currentTime!==lastVideoTime){
+ if(landmarker&&v.readyState>=2&&v.currentTime!==lastVideoTime){
   if(c.width!==v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight}
   try{
-   const r=pose.detectForVideo(v,performance.now());ctx.clearRect(0,0,c.width,c.height);
-   if(r.landmarks&&r.landmarks.length){
+   const r=landmarker.detectForVideo(v,performance.now());
+   ctx.clearRect(0,0,c.width,c.height);
+   if(r.landmarks?.length){
     const lm=r.landmarks[0];draw(ctx,lm);const p=classify(lm);
     $("poseDetected").textContent=p?`ตรวจพบ ${p} — ค้างท่าไว้…`:"แสดงท่าตอบ A / B / C / D";
     if(p&&!locked){if(p!==lastPose){lastPose=p;poseSince=performance.now()}if(performance.now()-poseSince>550)answer(p)}
@@ -118,6 +157,8 @@ function loop(){
 }
 function draw(ctx,lm){
  ctx.save();ctx.strokeStyle="#67e8f9";ctx.fillStyle="#facc15";ctx.lineWidth=3;
+ const edges=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+ for(const [a,b] of edges){if(!lm[a]||!lm[b])continue;ctx.beginPath();ctx.moveTo(lm[a].x*ctx.canvas.width,lm[a].y*ctx.canvas.height);ctx.lineTo(lm[b].x*ctx.canvas.width,lm[b].y*ctx.canvas.height);ctx.stroke()}
  for(const p of lm){ctx.beginPath();ctx.arc(p.x*ctx.canvas.width,p.y*ctx.canvas.height,5,0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
@@ -140,16 +181,26 @@ function answer(p){
  else{hearts--; $("feedback").className="feedback bad";$("feedback").innerHTML=`❌ <b>${p?`ตอบ ${p} ผิด`:"หมดเวลา"}</b><br>เฉลย ${"ABCD"[x[2]]}. ${x[1][x[2]]}<br>${x[3]}`}
  $("score").textContent=score;$("hearts").textContent=hearts;$("nextBtn").textContent=idx===14?"ดูผลคะแนน →":"ข้อต่อไป →";$("nextBtn").classList.remove("hidden");
 }
-function result(){clearInterval(timerId);if(stream)stream.getTracks().forEach(x=>x.stop());$("game").classList.remove("on");$("result").classList.add("on");$("playerResult").textContent=($("studentName").value||"นักเรียน")+" • ตอบถูก "+correct+"/15";$("finalScore").textContent=score;$("correctCount").textContent=correct;$("rank").textContent=score>=1300?"🏆 Remainder Master":score>=1000?"🟣 นักวิเคราะห์":score>=700?"🔵 นักล่าเศษเหลือ":"🟤 นักฝึกหัด"}
+function result(){
+ clearInterval(timerId);if(stream)stream.getTracks().forEach(x=>x.stop());
+ $("game").classList.remove("on");$("result").classList.add("on");
+ $("playerResult").textContent=($("studentName").value||"นักเรียน")+" • ตอบถูก "+correct+"/15";
+ $("finalScore").textContent=score;$("correctCount").textContent=correct;
+ $("rank").textContent=score>=1300?"🏆 Remainder Master":score>=1000?"🟣 นักวิเคราะห์":score>=700?"🔵 นักล่าเศษเหลือ":"🟤 นักฝึกหัด";
+}
 $("startBtn").onclick=async()=>{
- $("startBtn").disabled=true;$("startBtn").textContent="กำลังเริ่ม…";$("debug").textContent="เริ่มต้นระบบ…";
+ $("startBtn").disabled=true;$("startBtn").textContent="กำลังเริ่ม…";
  try{
-  await loadAI();await openCamera();$("start").classList.remove("on");$("game").classList.add("on");render();
+  if(!landmarker)await loadAI();
+  await openCamera();
+  $("start").classList.remove("on");$("game").classList.add("on");render();
  }catch(e){
-  status("เริ่มเกมไม่สำเร็จ","err");log("ERROR: "+(e?.stack||e?.message||e));$("startBtn").disabled=false;$("startBtn").textContent="ลองอีกครั้ง";
+  status("เริ่มเกมไม่สำเร็จ","err");log("ERROR: "+(e?.stack||e?.message||e));
+  $("startBtn").disabled=false;$("startBtn").textContent="ลองอีกครั้ง";
  }
 };
-$("nextBtn").onclick=()=>{idx++;if(idx>=15)result();else render()};$("againBtn").onclick=()=>location.reload();
+$("nextBtn").onclick=()=>{idx++;if(idx>=15)result();else render()};
+$("againBtn").onclick=()=>location.reload();
 </script>
 </body>
 </html>
