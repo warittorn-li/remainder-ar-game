@@ -601,7 +601,7 @@
           </div>
 
           <div class="timer-badge" id="timer-badge">
-            <i class="fa-regular fa-clock"></i> <span id="timer-display">10</span>s
+            <i class="fa-regular fa-clock"></i> <span id="timer-display">30</span>s
           </div>
         </div>
 
@@ -817,7 +817,7 @@
     let lives = 3;
     let correctCount = 0;
     let wrongCount = 0;
-    let timer = 10;
+    let timer = 30; // ปรับเวลาเป็นข้อละ 30 วินาที
     let timerInterval = null;
     let isLocked = false;
     let isDebug = false;
@@ -1028,8 +1028,8 @@
       camera.start().then(() => {
         camStatus.innerText = "กล้องพร้อมใช้งาน";
       }).catch(err => {
-        camStatus.innerText = "ไม่พบกล้อง";
-        alert("ไม่สามารถเปิดใช้งานกล้องได้ กรุณาอนุญาตการเข้าถึงกล้อง");
+        camStatus.innerText = "ไม่สามารถเชื่อมต่อกล้องได้";
+        console.error(err);
       });
 
       currentQ = 0;
@@ -1037,14 +1037,22 @@
       lives = 3;
       correctCount = 0;
       wrongCount = 0;
-      updateHeaderStats();
+      updateStatsDisplay();
       loadQuestion();
     }
 
     function loadQuestion() {
+      if (currentQ >= questions.length || lives <= 0) {
+        endGame();
+        return;
+      }
+
       isLocked = false;
       activeGesture = "NONE";
       resetProgress();
+
+      cardA.className = "option-card-ar option-a";
+      cardB.className = "option-card-ar option-b";
 
       const q = questions[currentQ];
       qProgressEl.innerText = `ข้อที่ ${currentQ + 1} / ${questions.length}`;
@@ -1053,21 +1061,20 @@
       valAEl.innerText = q.a;
       valBEl.innerText = q.b;
 
-      // Reset Card styles
-      cardA.className = "option-card-ar option-a";
-      cardB.className = "option-card-ar option-b";
+      resetTimer();
+    }
 
-      // Reset Timer
-      timer = 10;
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timer = 30; // ตั้งเวลา 30 วินาที
       timerDisplay.innerText = timer;
       timerBadge.classList.remove("urgent");
 
-      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         timer--;
         timerDisplay.innerText = timer;
 
-        if (timer <= 3) {
+        if (timer <= 5) {
           timerBadge.classList.add("urgent");
         }
 
@@ -1078,92 +1085,78 @@
       }, 1000);
     }
 
-    function confirmAnswer(userChoice) {
+    function handleTimeout() {
+      if (isLocked) return;
+      isLocked = true;
+      lives--;
+      wrongCount++;
+      updateStatsDisplay();
+
+      gestureBanner.innerHTML = "⏰ หมดเวลา!";
+
+      setTimeout(() => {
+        currentQ++;
+        loadQuestion();
+      }, 1500);
+    }
+
+    function confirmAnswer(selectedOption) {
+      if (isLocked) return;
       isLocked = true;
       clearInterval(timerInterval);
 
       const q = questions[currentQ];
-      const isCorrect = (userChoice === q.answer);
-
-      if (userChoice === "A") {
-        cardA.classList.add(isCorrect ? "correct" : "incorrect");
-      } else {
-        cardB.classList.add(isCorrect ? "correct" : "incorrect");
-      }
+      const isCorrect = selectedOption === q.answer;
 
       if (isCorrect) {
-        score += 100;
+        score += 100 + timer * 10;
         correctCount++;
-        showFeedbackModal(true, `🎉 ถูกต้อง! (+100 คะแนน)`, q.explain);
+        gestureBanner.innerHTML = `✅ ถูกต้อง! (+${100 + timer * 10} คะแนน)`;
+        if (selectedOption === "A") cardA.classList.add("correct");
+        else cardB.classList.add("correct");
       } else {
         lives--;
         wrongCount++;
-        showFeedbackModal(false, `❌ ยังไม่ถูกต้อง!`, `เฉลยคือข้อ ${q.answer}
-${q.explain}`);
+        gestureBanner.innerHTML = `❌ ตอบผิด! (ข้อนี้ตอบ ${q.answer})`;
+        if (selectedOption === "A") {
+          cardA.classList.add("incorrect");
+          cardB.classList.add("correct");
+        } else {
+          cardB.classList.add("incorrect");
+          cardA.classList.add("correct");
+        }
       }
 
-      updateHeaderStats();
-    }
-
-    function handleTimeout() {
-      isLocked = true;
-      lives--;
-      wrongCount++;
-      updateHeaderStats();
-
-      const q = questions[currentQ];
-      showFeedbackModal(false, `⏱ หมดเวลา!`, `เฉลยคือข้อ ${q.answer}
-${q.explain}`);
-    }
-
-    function showFeedbackModal(isCorrect, title, explanation) {
-      const modal = document.getElementById("summary-modal");
-      const icon = document.getElementById("summary-icon");
-      const titleEl = document.getElementById("summary-title");
-      const descEl = document.getElementById("summary-desc");
-
-      icon.innerText = isCorrect ? "🎉" : "❌";
-      titleEl.innerText = title;
-      titleEl.style.color = isCorrect ? "var(--success)" : "var(--danger)";
-      descEl.innerText = explanation;
-
-      // Hide play stats block during single question feedback
-      document.getElementById("stat-score").parentElement.parentElement.style.display = "none";
-
-      modal.classList.add("active");
+      updateStatsDisplay();
 
       setTimeout(() => {
-        modal.classList.remove("active");
-        if (lives <= 0 || currentQ >= questions.length - 1) {
-          endGame();
-        } else {
-          currentQ++;
-          loadQuestion();
-        }
-      }, 2500);
+        currentQ++;
+        loadQuestion();
+      }, 2000);
+    }
+
+    function updateStatsDisplay() {
+      scoreDisplay.innerText = score;
+      let heartsStr = "";
+      for (let i = 0; i < lives; i++) heartsStr += "❤️ ";
+      heartsDisplay.innerText = heartsStr.trim() || "💔";
     }
 
     function endGame() {
+      clearInterval(timerInterval);
       const modal = document.getElementById("summary-modal");
-      const icon = document.getElementById("summary-icon");
-      const titleEl = document.getElementById("summary-title");
-      const descEl = document.getElementById("summary-desc");
-
-      document.getElementById("stat-score").parentElement.parentElement.style.display = "grid";
       document.getElementById("stat-correct").innerText = correctCount;
       document.getElementById("stat-wrong").innerText = wrongCount;
       document.getElementById("stat-score").innerText = score;
 
       if (lives <= 0) {
-        icon.innerText = "💀";
-        titleEl.innerText = "GAME OVER";
-        titleEl.style.color = "var(--danger)";
-        descEl.innerText = "หัวใจหมดแล้ว! พยายามอีกครั้งนะ";
+        document.getElementById("summary-icon").innerText = "💥";
+        document.getElementById("summary-title").innerText = "GAME OVER";
+        document.getElementById("summary-desc").innerText = "คุณเสียหัวใจครบ 3 ดวง ลองใหม่อีกครั้งนะ!";
       } else {
-        icon.innerText = "🏆";
-        titleEl.innerText = "MISSION COMPLETE!";
-        titleEl.style.color = "#38bdf8";
-        descEl.innerText = "เก่งมาก! คุณผ่านการทบทวนทฤษฎีบทเศษเหลือเรียบร้อยแล้ว";
+        document.getElementById("summary-icon").innerText = "🎉";
+        document.getElementById("summary-title").innerText = "MISSION COMPLETE!";
+        document.getElementById("summary-desc").innerText = "คุณทำแบบทดสอบครบทุกข้อแล้ว ยอดเยี่ยมมาก!";
       }
 
       modal.classList.add("active");
@@ -1176,30 +1169,20 @@ ${q.explain}`);
       lives = 3;
       correctCount = 0;
       wrongCount = 0;
-      updateHeaderStats();
+      updateStatsDisplay();
       loadQuestion();
-    }
-
-    function updateHeaderStats() {
-      scoreDisplay.innerText = score;
-      let heartsStr = "";
-      for (let i = 0; i < 3; i++) {
-        heartsStr += (i < lives) ? "❤️ " : "🖤 ";
-      }
-      heartsDisplay.innerText = heartsStr;
     }
 
     function toggleDebug() {
       isDebug = !isDebug;
-      const debugBtn = document.getElementById("debug-btn");
-      const debugPanel = document.getElementById("debug-panel");
-
+      const panel = document.getElementById("debug-panel");
+      const btn = document.getElementById("debug-btn");
       if (isDebug) {
-        debugBtn.classList.add("active");
-        debugPanel.classList.add("active");
+        panel.classList.add("active");
+        btn.classList.add("active");
       } else {
-        debugBtn.classList.remove("active");
-        debugPanel.classList.remove("active");
+        panel.classList.remove("active");
+        btn.classList.remove("active");
       }
     }
   </script>
