@@ -1,1169 +1,865 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REMAINDER AR - เกมทบทวนทฤษฎีบทเศษเหลือ (ม.4)</title>
-  
-  <!-- Google Fonts: Prompt -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>REMAINDER AR — ทฤษฎีบทเศษเหลือ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0a1628;
+    --bg-panel:#101f38;
+    --bg-panel-2:#0d1a30;
+    --grid-line:rgba(122,162,255,0.07);
+    --ink:#eaf1ff;
+    --ink-dim:#8fa3c8;
+    --amber:#f5a623;
+    --amber-dim:#9c6f24;
+    --teal:#2dd4bf;
+    --coral:#ff5d6c;
+    --ok:#42e08f;
+    --line:#22375e;
+    --card-a:#3a6ea5;
+    --card-b:#a5573a;
+    --card-c:#5a3a9c;
+    --shadow: 0 10px 30px rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%; margin:0; overflow:hidden;
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      radial-gradient(1200px 700px at 15% -10%, #16294a 0%, var(--bg-deep) 55%);
+    color:var(--ink);
+    font-family:'Kanit',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num, .timer-num, .score-num, .badge, .qcount{ font-family:'Chakra Petch',sans-serif; }
 
-  <style>
-    :root {
-      --bg-dark: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --primary: #38bdf8;
-      --accent-a: #fbbf24;
-      --accent-b: #818cf8;
-      --accent-c: #f43f5e;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --text-light: #f8fafc;
-      --text-muted: #94a3b8;
-    }
+  #app{ height:100vh; width:100vw; display:flex; flex-direction:column; padding:14px; gap:10px; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Prompt', sans-serif;
-    }
+  /* ---------- HEADER ---------- */
+  header{
+    flex:0 0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 20px;
+    box-shadow:var(--shadow);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .mark{
+    width:34px;height:34px;border-radius:9px;
+    background:conic-gradient(from 220deg, var(--teal), var(--amber), var(--card-c), var(--teal));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#08111f;
+    font-family:'Chakra Petch',sans-serif;
+  }
+  .brand h1{ font-size:18px; margin:0; letter-spacing:.5px; font-family:'Chakra Petch',sans-serif; }
+  .brand small{ color:var(--ink-dim); display:block; font-size:11px; margin-top:1px;}
+  .hud{ display:flex; align-items:center; gap:22px; }
+  .hud .stat{ display:flex; align-items:center; gap:7px; font-size:15px; }
+  .hud .stat .label{ color:var(--ink-dim); font-size:11px; }
+  #hearts{ letter-spacing:2px; }
+  #timerWrap{ display:flex; align-items:center; gap:8px; }
+  #timerRing{ position:relative; width:38px; height:38px; }
+  #timerRing svg{ transform:rotate(-90deg); }
+  #timerRing circle.bg{ stroke:#1c2f52; }
+  #timerRing circle.fg{ stroke:var(--teal); transition:stroke-dashoffset .3s linear, stroke .3s; }
+  #timerNum{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600;}
+  .debugBtn{
+    background:transparent; border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:8px; padding:6px 12px; font-family:'Kanit'; font-size:12px; cursor:pointer;
+  }
+  .debugBtn:hover{ color:var(--ink); border-color:var(--teal); }
 
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      user-select: none;
-    }
+  /* ---------- MAIN / AR FRAME (question + options + camera share one frame) ---------- */
+  main{ flex:1 1 auto; min-height:0; display:flex; }
+  .arFrame{
+    position:relative; flex:1 1 auto; min-height:0; width:100%;
+    border-radius:18px; overflow:hidden; background:#000;
+    border:1px solid var(--line); box-shadow:var(--shadow);
+  }
+  .arFrame video, .arFrame > canvas#overlayCanvas{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1);
+  }
+  .arFrame > canvas#overlayCanvas{ pointer-events:none; }
+  /* legibility fades so overlaid text/cards read over any camera background */
+  .arFrame::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background:
+      linear-gradient(to bottom, rgba(6,12,22,0.72) 0%, rgba(6,12,22,0.15) 26%, rgba(6,12,22,0.05) 55%, rgba(6,12,22,0.35) 74%, rgba(6,12,22,0.82) 100%);
+  }
 
-    /* Header Bar */
-    header {
-      background: #1e293b80;
-      backdrop-filter: blur(8px);
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid var(--card-border);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+  .topOverlay{
+    position:absolute; top:0; left:0; right:0; z-index:2;
+    padding:16px 20px 10px;
+  }
+  .qMeta{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .qMeta .pill{
+    font-family:'Chakra Petch'; font-size:11px; letter-spacing:1px; color:var(--bg-deep);
+    background:var(--amber); padding:3px 10px; border-radius:20px; font-weight:700;
+  }
+  .qMeta .diff{ font-size:12px; color:var(--ink-dim); }
+  .questionBox{
+    background:rgba(10,20,38,0.62); backdrop-filter:blur(6px);
+    border:1px solid rgba(122,162,255,0.18); border-radius:12px;
+    padding:14px 20px; max-width:900px;
+  }
+  .questionBox .prompt{ font-size:21px; line-height:1.5; }
 
-    .brand h1 {
-      font-size: 1.6rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+  /* camera status badge cluster, top-right corner of the same frame */
+  .camCorner{
+    position:absolute; top:16px; right:18px; z-index:3;
+    display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  }
+  .poseFlag{
+    background:rgba(10,22,40,0.72); backdrop-filter:blur(4px);
+    padding:5px 12px; border-radius:8px; font-family:'Chakra Petch'; font-size:13px;
+  }
+  .camStatusList{ display:flex; flex-direction:column; gap:4px; align-items:flex-end; }
+  .camStatusList .row{
+    display:flex; align-items:center; gap:6px; color:var(--ink-dim); font-size:11px;
+    background:rgba(10,22,40,0.55); padding:3px 9px; border-radius:6px;
+  }
+  .dot{ width:7px;height:7px;border-radius:50%; background:#555; flex:0 0 auto; }
+  .dot.green{ background:var(--ok); box-shadow:0 0 6px var(--ok); }
+  .dot.yellow{ background:var(--amber); box-shadow:0 0 6px var(--amber); }
+  .camNote{ font-size:11px; color:var(--coral); text-align:right; min-height:14px; }
 
-    .stats-bar {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
+  .bottomOverlay{
+    position:absolute; left:0; right:0; bottom:0; z-index:2;
+    padding:10px 20px 18px; display:flex; flex-direction:column; gap:10px;
+  }
+  .optionsGrid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .optCard{
+    position:relative; border-radius:14px; padding:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px;
+    border:2px solid rgba(122,162,255,0.25); background:rgba(13,26,48,0.6); backdrop-filter:blur(6px);
+    transition:transform .15s, border-color .15s, box-shadow .15s, background .15s;
+  }
+  .optCard .gesture{ font-size:30px; }
+  .optCard .letter{ font-family:'Chakra Petch'; font-weight:700; font-size:14px; letter-spacing:2px; }
+  .optCard .letter.a{ color:var(--card-a); } .optCard .letter.b{ color:var(--card-b); } .optCard .letter.c{ color:var(--card-c); }
+  .optCard .ans{ font-family:'Chakra Petch'; font-size:27px; font-weight:600; }
+  .optCard.hold{ transform:scale(1.04); border-color:var(--amber); box-shadow:0 0 0 4px rgba(245,166,35,0.18); background:rgba(245,166,35,0.12); }
+  .optCard .holdBar{ position:absolute; bottom:0; left:0; height:4px; background:var(--amber); width:0%; border-radius:0 0 12px 12px; transition:width .05s linear; }
+  .optCard.correct{ border-color:var(--ok); background:rgba(66,224,143,0.18); }
+  .optCard.wrong{ border-color:var(--coral); background:rgba(255,93,108,0.16); }
+  .optCard.locked{ opacity:.55; }
 
-    .stat-badge {
-      background: var(--card-bg);
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--card-border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+  .feedbackBar{
+    min-height:30px; display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink-dim);
+    background:rgba(10,20,38,0.55); backdrop-filter:blur(4px); border-radius:10px; padding:6px 14px;
+  }
+  .feedbackBar.ok{ color:var(--ok); }
+  .feedbackBar.bad{ color:var(--coral); }
+  #nextBtn{
+    margin-left:auto; background:var(--teal); color:#062622; border:none; border-radius:8px;
+    padding:7px 15px; font-family:'Kanit'; font-weight:600; font-size:13px; cursor:pointer; display:none;
+  }
 
-    .timer-warning {
-      color: var(--danger) !important;
-      animation: pulse 0.8s infinite alternate;
-      border-color: var(--danger) !important;
-    }
+  /* ---------- OVERLAYS ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(6,12,22,0.88); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .overlay.hidden{ display:none; }
+  .card{
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line); border-radius:18px; padding:34px 40px; max-width:560px; text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .card h2{ font-family:'Chakra Petch'; margin:0 0 10px; font-size:24px; }
+  .card p{ color:var(--ink-dim); line-height:1.7; margin:6px 0; }
+  .card .big{ font-size:46px; margin:14px 0; }
+  .primaryBtn{
+    background:var(--teal); color:#062622; border:none; border-radius:10px; padding:12px 26px;
+    font-family:'Kanit'; font-weight:600; font-size:15px; cursor:pointer; margin-top:16px;
+  }
+  .ghostBtn{
+    background:transparent; border:1px solid var(--line); color:var(--ink); border-radius:10px;
+    padding:12px 26px; font-family:'Kanit'; font-size:15px; cursor:pointer; margin-top:16px; margin-left:10px;
+  }
+  #calibSteps{ text-align:left; margin:16px 0; color:var(--ink-dim); font-size:14px; line-height:1.9; }
+  #calibProgress{ height:6px; border-radius:4px; background:#1c2f52; overflow:hidden; margin-top:14px; }
+  #calibProgress .fill{ height:100%; width:0%; background:var(--teal); transition:width .1s linear; }
 
-    /* Layout Container */
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 20px;
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-      flex-grow: 1;
-    }
+  /* ---------- DEBUG PANEL ---------- */
+  #debugPanel{
+    position:fixed; right:14px; bottom:14px; width:280px; background:rgba(8,16,30,0.94);
+    border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-family:'Chakra Petch';
+    font-size:11.5px; color:var(--ink-dim); z-index:60; display:none;
+  }
+  #debugPanel.show{ display:block; }
+  #debugPanel h4{ margin:0 0 8px; color:var(--teal); font-size:12px; letter-spacing:1px; }
+  #debugPanel div.row{ display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dashed rgba(255,255,255,0.05); }
+  #debugPanel span.v{ color:var(--ink); }
 
-    .question-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .question-card {
-      background: var(--card-bg);
-      border: 2px solid var(--card-border);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-
-    .difficulty-tag {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-    }
-
-    .diff-easy { background: #065f46; color: #34d399; }
-    .diff-medium { background: #854d0e; color: #fde047; }
-    .diff-hard { background: #9f1239; color: #fca5a5; }
-
-    .question-text {
-      font-size: 1.4rem;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #ffffff;
-    }
-
-    .math-expr {
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin: 12px 0;
-      background: #0f172a60;
-      padding: 10px 16px;
-      border-radius: 8px;
-      display: inline-block;
-    }
-
-    /* Options Grid */
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .option-card {
-      background: var(--card-bg);
-      border: 3px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .option-card.card-a { border-color: #fbbf2440; }
-    .option-card.card-b { border-color: #818cf840; }
-    .option-card.card-c { border-color: #f43f5e40; }
-
-    .option-card.detected {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-    }
-
-    .option-card.card-a.detected { border-color: var(--accent-a); background: #3a2e10; }
-    .option-card.card-b.detected { border-color: var(--accent-b); background: #1e1b4b; }
-    .option-card.card-c.detected { border-color: var(--accent-c); background: #4c0519; }
-
-    .option-card.selected-correct {
-      border-color: var(--success) !important;
-      background: #064e3b !important;
-    }
-
-    .option-card.selected-wrong {
-      border-color: var(--danger) !important;
-      background: #7f1d1d !important;
-    }
-
-    .gesture-icon {
-      font-size: 2.8rem;
-      margin-bottom: 8px;
-    }
-
-    .option-label {
-      font-size: 1.2rem;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .option-val {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #ffffff;
-      word-break: break-word;
-    }
-
-    .progress-bar-container {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 8px;
-      background: rgba(255,255,255,0.1);
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--primary);
-      transition: width 0.05s linear;
-    }
-
-    .card-a .progress-bar-fill { background: var(--accent-a); }
-    .card-b .progress-bar-fill { background: var(--accent-b); }
-    .card-c .progress-bar-fill { background: var(--accent-c); }
-
-    /* Camera Panel */
-    .camera-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .camera-wrapper {
-      position: relative;
-      width: 100%;
-      height: 250px;
-      background: #000000;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 2px solid var(--card-border);
-    }
-
-    #webcam {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-
-    #output_canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transform: scaleX(-1);
-    }
-
-    .camera-status-badge {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(15, 23, 42, 0.85);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #94a3b8;
-    }
-
-    .status-dot.active { background: var(--success); }
-    .status-dot.warning { background: var(--danger); }
-
-    .detected-pose-badge {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(15, 23, 42, 0.9);
-      padding: 6px 14px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      border: 1px solid var(--card-border);
-    }
-
-    .explanation-card {
-      background: var(--card-bg);
-      border: 2px solid var(--card-border);
-      border-radius: 16px;
-      padding: 16px 20px;
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .explanation-card.correct { border-color: var(--success); background: #064e3b40; }
-    .explanation-card.wrong { border-color: var(--danger); background: #7f1d1d40; }
-
-    .exp-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    /* Modal Overlays */
-    .overlay-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .modal-box {
-      background: var(--card-bg);
-      border: 2px solid var(--card-border);
-      border-radius: 24px;
-      padding: 32px;
-      max-width: 520px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), #0284c7);
-      color: #fff;
-      border: none;
-      padding: 14px 28px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-top: 16px;
-      width: 100%;
-    }
-
-    .btn-primary:disabled {
-      background: #334155;
-      color: #64748b;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn-primary:not(:disabled):hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--card-border);
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-    }
-
-    .btn-secondary:hover { background: #334155; color: #fff; }
-
-    .debug-toggle-btn {
-      background: #334155;
-      color: #94a3b8;
-      border: 1px solid var(--card-border);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .debug-panel {
-      background: #020617;
-      border: 1px dashed #475569;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 0.75rem;
-      color: #38bdf8;
-      display: none;
-      text-align: left;
-      line-height: 1.4;
-    }
-
-    .btn-next {
-      background: #334155;
-      color: #fff;
-      border: 1px solid var(--card-border);
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      align-self: flex-end;
-      display: none;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 900px) {
-      .main-layout { grid-template-columns: 1fr; }
-      .options-grid { grid-template-columns: 1fr; }
-      .camera-wrapper { height: 200px; }
-    }
-  </style>
+  @media (max-width: 900px){
+    .optCard .gesture{ font-size:20px; } .optCard .ans{ font-size:16px; }
+    .optCard .letter{ font-size:10px; }
+    .questionBox .prompt{ font-size:14px; }
+    .questionBox{ padding:10px 14px; }
+    .hud{ gap:10px; }
+    .hud .stat{ font-size:12px; }
+    .brand small{ display:none; }
+    .camStatusList .row{ font-size:9px; padding:2px 6px; }
+    .poseFlag{ font-size:11px; padding:4px 8px; }
+  }
+</style>
 </head>
 <body>
 
-  <!-- Header Section -->
+<div id="app">
+
   <header>
     <div class="brand">
-      <h1>REMAINDER AR</h1>
+      <div class="mark">R</div>
+      <div>
+        <h1>REMAINDER AR</h1>
+        <small>ทฤษฎีบทเศษเหลือ · ม.4 · ควบคุมด้วยท่าทาง</small>
+      </div>
     </div>
-    <div class="stats-bar">
-      <div class="stat-badge">
-        <span>ข้อ</span>
-        <span id="q-counter" style="color: var(--primary);">1/15</span>
+    <div class="hud">
+      <div class="stat"><span class="label">ข้อ</span><span class="qcount" id="qCount">0/15</span></div>
+      <div class="stat"><span class="label">คะแนน</span><span class="score-num" id="scoreVal">0</span></div>
+      <div class="stat"><span class="label">หัวใจ</span><span id="hearts">❤️❤️❤️</span></div>
+      <div id="timerWrap">
+        <div id="timerRing">
+          <svg width="38" height="38"><circle class="bg" cx="19" cy="19" r="15" fill="none" stroke-width="4"/><circle class="fg" id="timerCircle" cx="19" cy="19" r="15" fill="none" stroke-width="4" stroke-linecap="round"/></svg>
+          <div id="timerNum">30</div>
+        </div>
       </div>
-      <div class="stat-badge">
-        <span>คะแนน</span>
-        <span id="score-val" style="color: var(--accent-a);">0</span>
-      </div>
-      <div class="stat-badge">
-        <span id="hearts-container">❤️❤️❤️</span>
-      </div>
-      <div class="stat-badge" id="timer-badge">
-        <span>⏱</span>
-        <span id="timer-val">30</span>
-      </div>
+      <button class="debugBtn" id="toggleDebug">Teacher Debug</button>
     </div>
   </header>
 
-  <!-- Main Game Layout -->
-  <div class="main-layout">
-    
-    <!-- Question & Options -->
-    <div class="question-panel">
-      <div class="question-card">
-        <span id="difficulty-tag" class="difficulty-tag diff-easy">ระดับง่าย</span>
-        <div class="question-text" id="question-text">กำลังโหลดโจทย์...</div>
-        <div class="math-expr" id="math-expr">P(x) = ...</div>
-        <div style="font-size: 1.1rem; color: var(--text-muted);" id="sub-question">เศษเหลือจากการหารคือเท่าใด?</div>
-      </div>
+  <main>
+    <section class="arFrame">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlayCanvas"></canvas>
 
-      <!-- 3 Option Cards -->
-      <div class="options-grid">
-        <div class="option-card card-a" id="card-0" onclick="window.selectOptionManual(0)">
-          <div class="gesture-icon">🫲</div>
-          <div class="option-label" style="color: var(--accent-a);">A (มือซ้าย)</div>
-          <div class="option-val" id="opt-0-val">-</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="fill-0"></div>
-          </div>
+      <div class="topOverlay">
+        <div class="qMeta">
+          <span class="pill" id="diffPill">EASY</span>
+          <span class="diff" id="diffLabel">ระดับง่าย</span>
         </div>
-
-        <div class="option-card card-b" id="card-1" onclick="window.selectOptionManual(1)">
-          <div class="gesture-icon">🫱</div>
-          <div class="option-label" style="color: var(--accent-b);">B (มือขวา)</div>
-          <div class="option-val" id="opt-1-val">-</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="fill-1"></div>
-          </div>
-        </div>
-
-        <div class="option-card card-c" id="card-2" onclick="window.selectOptionManual(2)">
-          <div class="gesture-icon">🙌</div>
-          <div class="option-label" style="color: var(--accent-c);">C (สองมือ)</div>
-          <div class="option-val" id="opt-2-val">-</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="fill-2"></div>
-          </div>
+        <div class="questionBox">
+          <div class="prompt" id="promptText">กำลังโหลดโจทย์...</div>
         </div>
       </div>
 
-      <!-- Explanation Banner -->
-      <div class="explanation-card" id="explanation-card">
-        <div class="exp-title" id="exp-title">🎉 ถูกต้อง!</div>
-        <div id="exp-detail" style="color: var(--text-light); line-height: 1.5;"></div>
+      <div class="camCorner">
+        <div class="poseFlag" id="poseFlag">🕐 กำลังตรวจจับ</div>
+        <div class="camStatusList">
+          <div class="row"><span class="dot" id="dotCam"></span><span id="camText">กล้องกำลังเริ่มต้น...</span></div>
+          <div class="row"><span class="dot" id="dotPlayer"></span><span id="playerText">ยังไม่พบผู้เล่น</span></div>
+        </div>
+        <div class="camNote" id="camNote"></div>
       </div>
 
-      <button class="btn-next" id="btn-next" onclick="window.nextQuestion()">ข้อถัดไป ➔</button>
-    </div>
-
-    <!-- Camera Panel -->
-    <div class="camera-panel">
-      <div class="camera-wrapper">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="output_canvas"></canvas>
-        
-        <div class="camera-status-badge">
-          <div class="status-dot" id="cam-status-dot"></div>
-          <span id="cam-status-text">กำลังโหลดกล้อง...</span>
+      <div class="bottomOverlay">
+        <div class="optionsGrid" id="optionsGrid">
+          <div class="optCard" data-key="A"><div class="holdBar"></div><div class="gesture">🫲</div><div class="letter a">A · ยกมือซ้าย</div><div class="ans">–</div></div>
+          <div class="optCard" data-key="B"><div class="holdBar"></div><div class="gesture">🫱</div><div class="letter b">B · ยกมือขวา</div><div class="ans">–</div></div>
+          <div class="optCard" data-key="C"><div class="holdBar"></div><div class="gesture">🙌</div><div class="letter c">C · ยกสองมือ</div><div class="ans">–</div></div>
         </div>
-
-        <div class="detected-pose-badge" id="detected-pose-badge">
-          ท่าทาง: -
+        <div class="feedbackBar" id="feedbackBar">
+          <span id="feedbackText">ยกมือค้างไว้ประมาณ 0.7 วินาทีเพื่อยืนยันคำตอบ</span>
+          <button id="nextBtn">ข้อต่อไป →</button>
         </div>
       </div>
+    </section>
+  </main>
+</div>
 
-      <button class="debug-toggle-btn" onclick="window.toggleTeacherDebug()">🛠 Teacher Debug Mode</button>
-      
-      <div class="debug-panel" id="debug-panel">
-        <div>FPS: <span id="db-fps">0</span></div>
-        <div>Pose Conf: <span id="db-conf">0</span></div>
-        <div>L Wrist Y: <span id="db-lw">0</span> | L Shoulder Y: <span id="db-ls">0</span></div>
-        <div>R Wrist Y: <span id="db-rw">0</span> | R Shoulder Y: <span id="db-rs">0</span></div>
-        <div>Detected Pose: <span id="db-pose">NONE</span></div>
-        <div>Selected Opt Index: <span id="db-sel">-1</span></div>
-        <div>Current Q Correct: <span id="db-correct">-</span></div>
-      </div>
-    </div>
-
+<!-- CALIBRATION OVERLAY -->
+<div class="overlay" id="calibOverlay">
+  <div class="card">
+    <h2>เตรียมพร้อม</h2>
+    <p>ยืนตรงหน้ากล้อง ห่างประมาณ 1.5–3 เมตร</p>
+    <p>ยกมือทั้งสองข้างลง แล้วอยู่นิ่ง ๆ</p>
+    <div id="calibStatusBig" class="big">🧍</div>
+    <p id="calibStatusText">ระบบกำลังตรวจสอบตำแหน่งตัวผู้เล่น...</p>
+    <div id="calibProgress"><div class="fill" id="calibFill"></div></div>
+    <button class="primaryBtn" id="startGameBtn" style="display:none;">พร้อมเล่น! เริ่มเกม</button>
   </div>
+</div>
 
-  <!-- Calibration Modal -->
-  <div class="overlay-modal" id="calibration-modal">
-    <div class="modal-box">
-      <h2 style="font-size: 1.8rem; margin-bottom: 12px; color: var(--primary);">เตรียมพร้อมเข้าสู่เกม</h2>
-      <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px;">
-        1. ยืนห่างจากกล้องประมาณ 1.5 - 3 เมตรให้เห็นลำตัวชัดเจน<br>
-        2. ลดมือลงทั้งสองข้างก่อนเริ่ม<br><br>
-        <strong>ท่าทางตอบคำถาม:</strong><br>
-        🫲 ยกมือซ้าย = เลือก A | 🫱 ยกมือขวา = เลือก B<br>
-        🙌 ยกสองมือ = เลือก C
-      </p>
-      
-      <div id="calib-status-msg" style="color: var(--accent-a); font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">
-        ⏳ กำลังโหลดระบบ AI และเปิดใช้งานกล้อง...
-      </div>
-
-      <button class="btn-primary" id="btn-start-game" disabled onclick="window.startGame()">พร้อมแล้ว! เริ่มเล่นเลย</button>
-      
-      <button class="btn-secondary" id="btn-retry-cam" style="display: none;" onclick="window.retryCamera()">🔄 ลองเชื่อมต่อกล้องใหม่</button>
-      <button class="btn-secondary" onclick="window.bypassCamera()">🖱 เล่นโดยใช้การคลิกเลือก (ไม่ใช้กล้อง)</button>
-    </div>
+<!-- LOADING OVERLAY -->
+<div class="overlay" id="loadingOverlay">
+  <div class="card">
+    <h2>REMAINDER AR</h2>
+    <div class="big">📡</div>
+    <p id="loadingText">กำลังโหลดโมเดล MediaPipe Pose Landmarker...</p>
   </div>
+</div>
 
-  <!-- Game Over Modal -->
-  <div class="overlay-modal" id="game-over-modal" style="display: none;">
-    <div class="modal-box">
-      <h2 id="go-title" style="font-size: 2.2rem; margin-bottom: 12px;">GAME OVER</h2>
-      <p id="go-desc" style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 20px;">หัวใจหมดแล้ว! พยายามใหม่อีกครั้งนะ</p>
-      <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; color: var(--accent-a);">
-        คะแนนรวม: <span id="final-score">0</span> คะแนน
-      </div>
-      <button class="btn-primary" onclick="window.restartGame()">เล่นใหม่อีกครั้ง 🔄</button>
-    </div>
+<!-- GAME OVER OVERLAY -->
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="card">
+    <h2 id="goTitle">GAME OVER</h2>
+    <div class="big" id="goEmoji">💔</div>
+    <p>คะแนนรวม: <b id="goScore">0</b></p>
+    <p>ตอบถูก <b id="goCorrect">0</b> จาก <b id="goTotal">15</b> ข้อ</p>
+    <button class="primaryBtn" id="restartBtn">เล่นอีกครั้ง</button>
   </div>
+</div>
 
-  <!-- ES Module Script -->
-  <script type="module">
-    import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+<!-- DEBUG PANEL -->
+<div id="debugPanel">
+  <h4>TEACHER DEBUG</h4>
+  <div class="row"><span>FPS</span><span class="v" id="dbgFps">-</span></div>
+  <div class="row"><span>Pose confidence</span><span class="v" id="dbgConf">-</span></div>
+  <div class="row"><span>Left wrist (y)</span><span class="v" id="dbgLW">-</span></div>
+  <div class="row"><span>Right wrist (y)</span><span class="v" id="dbgRW">-</span></div>
+  <div class="row"><span>Left shoulder (y)</span><span class="v" id="dbgLS">-</span></div>
+  <div class="row"><span>Right shoulder (y)</span><span class="v" id="dbgRS">-</span></div>
+  <div class="row"><span>Current pose</span><span class="v" id="dbgPose">-</span></div>
+  <div class="row"><span>Selected option</span><span class="v" id="dbgSel">-</span></div>
+  <div class="row"><span>Correct option</span><span class="v" id="dbgCorrect">-</span></div>
+  <div class="row"><span>Timer</span><span class="v" id="dbgTimer">-</span></div>
+  <div class="row"><span>Calibration</span><span class="v" id="dbgCalib">-</span></div>
+</div>
 
-    /* Question Bank & Logic */
-    const rawQuestionBank = [
-      {
-        id: 1, diff: 'easy', text: 'กำหนดให้ P(x) = x³ + 2x + 1', expr: 'P(x) = x³ + 2x + 1', sub: 'หารด้วย x - 1 เศษเหลือเท่าใด?',
-        evalFunc: (x) => Math.pow(x, 3) + 2*x + 1, targetX: 1,
-        distractors: [{ val: 5 }, { val: 3 }],
-        exp: 'ตามทฤษฎีบทเศษเหลือ เศษเหลือคือ P(1) = 1³ + 2(1) + 1 = 4'
-      },
-      {
-        id: 2, diff: 'easy', text: 'กำหนดให้ P(x) = x² + 3x + 2', expr: 'P(x) = x² + 3x + 2', sub: 'หารด้วย x - 1 เศษเหลือเท่าใด?',
-        evalFunc: (x) => Math.pow(x, 2) + 3*x + 2, targetX: 1,
-        distractors: [{ val: 4 }, { val: 0 }],
-        exp: 'ตามทฤษฎีบทเศษเหลือ เศษเหลือคือ P(1) = 1² + 3(1) + 2 = 6'
-      },
-      {
-        id: 3, diff: 'easy', text: 'กำหนดให้ P(x) = 2x³ - x² + 4', expr: 'P(x) = 2x³ - x² + 4', sub: 'หารด้วย x - 2 เศษเหลือเท่าใด?',
-        evalFunc: (x) => 2*Math.pow(x, 3) - Math.pow(x, 2) + 4, targetX: 2,
-        distractors: [{ val: 12 }, { val: 20 }],
-        exp: 'เศษเหลือคือ P(2) = 2(2)³ - (2)² + 4 = 16 - 4 + 4 = 16'
-      },
-      {
-        id: 4, diff: 'easy', text: 'กำหนดให้ P(x) = x³ - 4x + 5', expr: 'P(x) = x³ - 4x + 5', sub: 'หารด้วย x + 1 เศษเหลือเท่าใด?',
-        evalFunc: (x) => Math.pow(x, 3) - 4*x + 5, targetX: -1,
-        distractors: [{ val: 2 }, { val: 10 }],
-        exp: 'ตัวหารคือ x + 1 ให้แทน x = -1 จะได้ P(-1) = (-1)³ - 4(-1) + 5 = 8'
-      },
-      {
-        id: 5, diff: 'easy', text: 'กำหนดให้ P(x) = 3x² - 5x + 7', expr: 'P(x) = 3x² - 5x + 7', sub: 'หารด้วย x - 2 เศษเหลือเท่าใด?',
-        evalFunc: (x) => 3*Math.pow(x, 2) - 5*x + 7, targetX: 2,
-        distractors: [{ val: 5 }, { val: 11 }],
-        exp: 'เศษเหลือคือ P(2) = 3(2)² - 5(2) + 7 = 12 - 10 + 7 = 9'
-      },
-      {
-        id: 6, diff: 'medium', text: 'P(x) = x⁴ - 2x² + k หารด้วย x - 2 เหลือเศษ 10', expr: 'P(x) = x⁴ - 2x² + k', sub: 'ค่าของ k เท่ากับเท่าใด?',
-        correctVal: 2, distractors: [{ val: -2 }, { val: 18 }],
-        exp: 'P(2) = 2⁴ - 2(2)² + k = 16 - 8 + k = 8 + k = 10 ➔ k = 2'
-      },
-      {
-        id: 7, diff: 'medium', text: 'P(x) = 2x³ + kx² - x + 6 หารด้วย x + 1 เหลือเศษ 4', expr: 'P(x) = 2x³ + kx² - x + 6', sub: 'ค่าของ k เท่ากับเท่าใด?',
-        correctVal: -1, distractors: [{ val: -3 }, { val: 1 }],
-        exp: 'P(-1) = 2(-1)³ + k(-1)² - (-1) + 6 = -2 + k + 1 + 6 = k + 5 = 4 ➔ k = -1'
-      },
-      {
-        id: 8, diff: 'medium', text: 'P(x) = x³ - 3x² + ax + 5 หารด้วย x - 3 เหลือเศษ 8', expr: 'P(x) = x³ - 3x² + ax + 5', sub: 'ค่าของ a เท่ากับเท่าใด?',
-        correctVal: 1, distractors: [{ val: -1 }, { val: 3 }],
-        exp: 'P(3) = 27 - 27 + 3a + 5 = 3a + 5 = 8 ➔ 3a = 3 ➔ a = 1'
-      },
-      {
-        id: 9, diff: 'medium', text: 'กำหนดให้ P(x) = 4x³ - 2x + 1', expr: 'P(x) = 4x³ - 2x + 1', sub: 'หารด้วย 2x - 1 เศษเหลือเท่าใด?',
-        correctVal: '1/2', distractors: [{ val: '3' }, { val: '3/2' }],
-        exp: 'ตัวหาร 2x - 1 = 0 ➔ x = 1/2. ดังนั้น P(1/2) = 4(1/8) - 2(1/2) + 1 = 1/2'
-      },
-      {
-        id: 10, diff: 'medium', text: 'กำหนด P(x) = x³ + x² - 5x + 3', expr: 'P(x) = x³ + x² - 5x + 3', sub: 'พหุนามใดเป็นตัวประกอบของ P(x)?',
-        correctVal: 'x - 1', distractors: [{ val: 'x + 1' }, { val: 'x - 2' }],
-        exp: 'ตามทฤษฎีบทตัวประกอบ ถ้า P(1) = 1 + 1 - 5 + 3 = 0 แสดงว่า x - 1 เป็นตัวประกอบ'
-      },
-      {
-        id: 11, diff: 'hard', text: 'P(x) = x³ + ax² + bx + 2 หารด้วย x-1 เหลือเศษ 4 และหารด้วย x+1 เหลือเศษ 2', expr: 'P(x) = x³ + ax² + bx + 2', sub: 'ค่าของ a เท่ากับเท่าใด?',
-        correctVal: 1, distractors: [{ val: 0 }, { val: 2 }],
-        exp: 'P(1): a+b=1, P(-1): a-b=1 ➔ บวกสมการจะได้ 2a = 2 ➔ a = 1'
-      },
-      {
-        id: 12, diff: 'hard', text: 'P(x) หารด้วย x-2 เหลือเศษ 5 และหารด้วย x+3 เหลือเศษ -10', expr: 'P(x) ÷ (x-2)(x+3)', sub: 'เศษเหลือจากการหารคือพหุนามใด?',
-        correctVal: '3x - 1', distractors: [{ val: '2x + 1' }, { val: '3x + 1' }],
-        exp: 'ให้เศษเหลือคือ ax + b ➔ 2a + b = 5 และ -3a + b = -10 ➔ แก้ระบบได้ a = 3, b = -1 ➔ 3x - 1'
-      },
-      {
-        id: 13, diff: 'hard', text: 'P(x) = 2x⁴ - 3x³ + ax² + 5x - 6 หารด้วย x - 2 เหลือเศษ 12', expr: 'P(x) = 2x⁴ - 3x³ + ax² + 5x - 6', sub: 'ค่าของ a เท่ากับเท่าใด?',
-        correctVal: 0, distractors: [{ val: 1 }, { val: -1 }],
-        exp: 'P(2) = 32 - 24 + 4a + 10 - 6 = 12 + 4a = 12 ➔ 4a = 0 ➔ a = 0'
-      },
-      {
-        id: 14, diff: 'hard', text: 'P(x) = x³ - 2x² + ax + b หารด้วย x - 1 เหลือเศษ 2', expr: 'P(x) = x³ - 2x² + ax + b', sub: 'ผลรวมของ a + b เท่ากับเท่าใด?',
-        correctVal: 3, distractors: [{ val: -3 }, { val: 1 }],
-        exp: 'P(1) = 1 - 2 + a + b = 2 ➔ -1 + a + b = 2 ➔ a + b = 3'
-      },
-      {
-        id: 15, diff: 'hard', text: 'กำหนดให้ P(x) = x¹⁰⁰ - 2x⁹⁹ + 5', expr: 'P(x) = x¹⁰⁰ - 2x⁹⁹ + 5', sub: 'หารด้วย x - 2 เศษเหลือเท่าใด?',
-        correctVal: 5, distractors: [{ val: 1 }, { val: 0 }],
-        exp: 'P(2) = 2¹⁰⁰ - 2(2⁹⁹) + 5 = 2¹⁰⁰ - 2¹⁰⁰ + 5 = 5'
-      }
-    ];
+<script type="module">
+import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
+/* ============================================================
+   QUESTION BANK — ทฤษฎีบทเศษเหลือ (Remainder Theorem), ม.4
+   ============================================================ */
+const QUESTION_BANK = [
+  // ---- EASY (1-5) ----
+  { difficulty:"easy", prompt:"P(x) = x² + 3x + 2 หารด้วย (x − 1) เศษเหลือเท่าใด?",
+    correct:"6", distractors:["4","7"],
+    explain:"เศษเหลือ = P(1) = 1 + 3 + 2 = 6" },
+  { difficulty:"easy", prompt:"P(x) = x³ + 2x + 1 หารด้วย (x − 1) เศษเหลือเท่าใด?",
+    correct:"4", distractors:["5","3"],
+    explain:"เศษเหลือ = P(1) = 1 + 2 + 1 = 4" },
+  { difficulty:"easy", prompt:"P(x) = 2x² − 3x + 1 หารด้วย (x − 2) เศษเหลือเท่าใด?",
+    correct:"3", distractors:["2","5"],
+    explain:"เศษเหลือ = P(2) = 8 − 6 + 1 = 3" },
+  { difficulty:"easy", prompt:"P(x) = x² − 5x + 6 หารด้วย (x − 3) เศษเหลือเท่าใด?",
+    correct:"0", distractors:["1","−1"],
+    explain:"เศษเหลือ = P(3) = 9 − 15 + 6 = 0 (แสดงว่า x−3 เป็นตัวประกอบ)" },
+  { difficulty:"easy", prompt:"P(x) = x³ − x² + 2 หารด้วย (x + 1) เศษเหลือเท่าใด?",
+    correct:"0", distractors:["2","4"],
+    explain:"เศษเหลือ = P(−1) = −1 − 1 + 2 = 0" },
+
+  // ---- MEDIUM (6-10) ----
+  { difficulty:"medium", prompt:"P(x) = x³ + 4x² − 3x + 2 หารด้วย (x + 2) เศษเหลือเท่าใด?",
+    correct:"16", distractors:["4","32"],
+    explain:"เศษเหลือ = P(−2) = −8 + 16 + 6 + 2 = 16" },
+  { difficulty:"medium", prompt:"P(x) = 4x² − 4x + 3 หารด้วย (2x − 1) เศษเหลือเท่าใด?",
+    correct:"2", distractors:["11","3"],
+    explain:"รากของ 2x−1=0 คือ x=1/2 → เศษเหลือ = P(1/2) = 1 − 2 + 3 = 2" },
+  { difficulty:"medium", prompt:"P(x) = kx³ − 2x² + x − 5 หารด้วย (x − 1) เหลือเศษ 3 จงหาค่า k",
+    correct:"9", distractors:["3","−9"],
+    explain:"P(1) = k − 2 + 1 − 5 = k − 6 = 3 ดังนั้น k = 9" },
+  { difficulty:"medium", prompt:"P(x) = x⁴ − 3x² + 2x − 4 หารด้วย (x + 1) เศษเหลือเท่าใด?",
+    correct:"−8", distractors:["−10","−4"],
+    explain:"เศษเหลือ = P(−1) = 1 − 3 − 2 − 4 = −8" },
+  { difficulty:"medium", prompt:"P(x) = x³ − 2x² − x + 2 หารด้วย (x − 2) เศษเหลือเท่าใด?",
+    correct:"0", distractors:["2","−2"],
+    explain:"เศษเหลือ = P(2) = 8 − 8 − 2 + 2 = 0" },
+
+  // ---- CHALLENGING (11-15) ----
+  { difficulty:"hard", prompt:"P(x) = 2x³ + ax² − 3x + 4 หารด้วย (x − 2) เหลือเศษ 10 จงหาค่า a",
+    correct:"−1", distractors:["1","−6"],
+    explain:"P(2) = 16 + 4a − 6 + 4 = 14 + 4a = 10 ดังนั้น a = −1" },
+  { difficulty:"hard", prompt:"P(x) = 3x³ − x² + 2x − 5 หารด้วย (x + 2) เศษเหลือเท่าใด?",
+    correct:"−37", distractors:["11","−29"],
+    explain:"เศษเหลือ = P(−2) = −24 − 4 − 4 − 5 = −37" },
+  { difficulty:"hard", prompt:"P(x) = x⁴ + 2x³ − x + 3 หารด้วย (x − 1) เศษเหลือเท่าใด?",
+    correct:"5", distractors:["3","7"],
+    explain:"เศษเหลือ = P(1) = 1 + 2 − 1 + 3 = 5" },
+  { difficulty:"hard", prompt:"P(x) = 4x² − 9 หารด้วย (2x − 3) เศษเหลือเท่าใด?",
+    correct:"0", distractors:["3","−9"],
+    explain:"รากของ 2x−3=0 คือ x=3/2 → P(3/2) = 9 − 9 = 0" },
+  { difficulty:"hard", prompt:"P(x) หารด้วย (x−1)(x+2) เหลือเศษ ax+b โดย P(1)=5 และ P(−2)=−4 เศษเหลือเมื่อ x=0 คือเท่าใด?",
+    correct:"2", distractors:["5","−4"],
+    explain:"a+b=5 และ −2a+b=−4 → a=3, b=2 ดังนั้นค่าที่ x=0 คือ b=2" },
+];
+
+const DIFF_LABEL = { easy:"ระดับง่าย", medium:"ระดับปานกลาง", hard:"ระดับท้าทาย" };
+
+/* ============================================================
+   GAME CONFIG
+   ============================================================ */
+const QUESTION_TIME = 30;      // seconds per question (updated)
+const HOLD_MS = 700;           // temporal smoothing hold time
+const ANGLE_THRESHOLD = 0.06;  // normalized y threshold for "raised"
+const NEXT_DELAY_MS = 1800;
+
+/* ============================================================
+   BUILD RANDOMIZED GAME SET (with pattern-safety validation)
+   ============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildOptionsFor(q){
+  const items = shuffle([
+    {text:q.correct, isCorrect:true},
+    {text:q.distractors[0], isCorrect:false},
+    {text:q.distractors[1], isCorrect:false},
+  ]);
+  const keys = ["A","B","C"];
+  const options = {};
+  let correctKey = null;
+  items.forEach((it,i)=>{
+    options[keys[i]] = it.text;
+    if(it.isCorrect) correctKey = keys[i];
+  });
+  return { options, correctKey };
+}
+
+function validSequence(correctKeys){
+  // no same letter > 2 in a row
+  for(let i=0;i<correctKeys.length-2;i++){
+    if(correctKeys[i]===correctKeys[i+1] && correctKeys[i+1]===correctKeys[i+2]) return false;
+  }
+  // no ABCABC repeating period-3 pattern across the whole set
+  if(correctKeys.length>=6){
+    let periodic = true;
+    for(let i=0;i<correctKeys.length-3;i++){
+      if(correctKeys[i]!==correctKeys[i+3]){ periodic=false; break; }
     }
+    if(periodic) return false;
+  }
+  // distribution check: each letter within a reasonable band
+  const counts = {A:0,B:0,C:0};
+  correctKeys.forEach(k=>counts[k]++);
+  const vals = Object.values(counts);
+  if(Math.max(...vals) - Math.min(...vals) > 4) return false;
+  return true;
+}
 
-    function generateGameQuestions() {
-      let valid = false;
-      let preparedQuestions = [];
-      let attempts = 0;
+function buildGameSet(){
+  let attempt=0, gameSet, correctKeys;
+  do{
+    attempt++;
+    const order = shuffle(QUESTION_BANK);
+    gameSet = order.map(q=>{
+      const {options, correctKey} = buildOptionsFor(q);
+      return { ...q, options, correctKey };
+    });
+    correctKeys = gameSet.map(g=>g.correctKey);
+  } while(!validSequence(correctKeys) && attempt<60);
 
-      while (!valid && attempts < 100) {
-        attempts++;
-        let pool = JSON.parse(JSON.stringify(rawQuestionBank));
-        
-        let easy = shuffleArray(pool.filter(q => q.diff === 'easy'));
-        let med = shuffleArray(pool.filter(q => q.diff === 'medium'));
-        let hard = shuffleArray(pool.filter(q => q.diff === 'hard'));
-        
-        let combined = [...easy, ...med, ...hard];
-        preparedQuestions = [];
+  // integrity check
+  console.assert(gameSet.length===15, "ต้องมี 15 ข้อ");
+  gameSet.forEach(g=>{
+    console.assert(Object.keys(g.options).length===3, "ต้องมี 3 ตัวเลือก");
+    console.assert(g.options[g.correctKey]===g.correct, "correctOptionIndex ต้องตรงกับ correct หลัง shuffle");
+  });
+  return gameSet;
+}
 
-        combined.forEach(q => {
-          let correctVal = (q.evalFunc) ? q.evalFunc(q.targetX) : q.correctVal;
-          if (typeof correctVal === 'number' && !Number.isInteger(correctVal)) {
-            correctVal = Math.round(correctVal * 100) / 100;
-          }
+/* ============================================================
+   STATE
+   ============================================================ */
+let gameSet = [];
+let qIndex = 0;
+let score = 0;
+let heartsLeft = 3;
+let correctCount = 0;
+let locked = false;
+let timerLeft = QUESTION_TIME;
+let timerInterval = null;
+let candidatePose = null;
+let candidateStart = 0;
+let debugOn = false;
 
-          let opts = [{ text: String(correctVal), isCorrect: true }];
-          q.distractors.forEach(d => opts.push({ text: String(d.val), isCorrect: false }));
+/* ============================================================
+   DOM REFS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const promptText = $("promptText");
+const diffPill = $("diffPill");
+const diffLabel = $("diffLabel");
+const qCount = $("qCount");
+const scoreVal = $("scoreVal");
+const heartsEl = $("hearts");
+const timerNum = $("timerNum");
+const timerCircle = $("timerCircle");
+const feedbackText = $("feedbackText");
+const feedbackBar = $("feedbackBar");
+const nextBtn = $("nextBtn");
+const optionCards = {
+  A: document.querySelector('.optCard[data-key="A"]'),
+  B: document.querySelector('.optCard[data-key="B"]'),
+  C: document.querySelector('.optCard[data-key="C"]'),
+};
+const CIRC = 2*Math.PI*15;
+timerCircle.style.strokeDasharray = `${CIRC}`;
 
-          opts = shuffleArray(opts);
-          let correctIdx = opts.findIndex(o => o.isCorrect);
+/* ============================================================
+   RENDER QUESTION
+   ============================================================ */
+function renderQuestion(){
+  const q = gameSet[qIndex];
+  locked = false;
+  candidatePose = null; candidateStart = 0;
+  qCount.textContent = `${qIndex+1}/15`;
+  diffPill.textContent = q.difficulty.toUpperCase();
+  diffLabel.textContent = DIFF_LABEL[q.difficulty];
+  promptText.innerHTML = q.prompt.replace(/x(\d)/g,'x<sup>$1</sup>').replace(/²/g,'<sup>2</sup>').replace(/³/g,'<sup>3</sup>').replace(/⁴/g,'<sup>4</sup>');
+  ["A","B","C"].forEach(k=>{
+    const card = optionCards[k];
+    card.classList.remove("correct","wrong","hold","locked");
+    card.querySelector(".ans").textContent = q.options[k];
+    card.querySelector(".holdBar").style.width = "0%";
+  });
+  feedbackBar.classList.remove("ok","bad");
+  feedbackText.textContent = "ยกมือค้างไว้ประมาณ 0.7 วินาทีเพื่อยืนยันคำตอบ";
+  nextBtn.style.display = "none";
+  startTimer();
+}
 
-          preparedQuestions.push({
-            ...q,
-            options: opts,
-            correctOptionIndex: correctIdx
-          });
-        });
-
-        valid = validateQuestionPattern(preparedQuestions);
-      }
-      return preparedQuestions;
+function startTimer(){
+  clearInterval(timerInterval);
+  timerLeft = QUESTION_TIME;
+  updateTimerUI();
+  timerInterval = setInterval(()=>{
+    if(locked) return;
+    timerLeft--;
+    updateTimerUI();
+    if(timerLeft<=0){
+      clearInterval(timerInterval);
+      handleTimeout();
     }
+  },1000);
+}
 
-    function validateQuestionPattern(questions) {
-      const indices = questions.map(q => q.correctOptionIndex);
-      for (let i = 0; i < indices.length - 2; i++) {
-        if (indices[i] === indices[i+1] && indices[i+1] === indices[i+2]) return false;
-      }
-      let patternStr = indices.join('');
-      if (patternStr.includes('012012') || patternStr.includes('210210')) return false;
+function updateTimerUI(){
+  timerNum.textContent = timerLeft;
+  const ratio = timerLeft/QUESTION_TIME;
+  timerCircle.style.strokeDashoffset = `${CIRC*(1-ratio)}`;
+  if(timerLeft<=3){
+    timerCircle.style.stroke = "var(--coral)";
+    feedbackText.textContent = "⚠️ เร็วเข้า!";
+  } else {
+    timerCircle.style.stroke = "var(--teal)";
+  }
+}
 
-      let counts = [0, 0, 0];
-      indices.forEach(idx => counts[idx]++);
-      if (counts[0] < 3 || counts[1] < 3 || counts[2] < 3) return false;
+/* ============================================================
+   ANSWER HANDLING
+   ============================================================ */
+function confirmAnswer(key){
+  if(locked) return;
+  locked = true;
+  clearInterval(timerInterval);
+  const q = gameSet[qIndex];
+  const isCorrect = key === q.correctKey;
+  ["A","B","C"].forEach(k=>optionCards[k].classList.add("locked"));
+  optionCards[key].classList.remove("locked");
+  optionCards[q.correctKey].classList.add("correct");
+  if(!isCorrect) optionCards[key].classList.add("wrong");
 
-      return true;
+  if(isCorrect){
+    score += 100;
+    correctCount++;
+    scoreVal.textContent = score;
+    feedbackBar.classList.add("ok");
+    feedbackText.textContent = `🎉 ถูกต้อง! +100 คะแนน`;
+  } else {
+    heartsLeft--;
+    updateHearts();
+    feedbackBar.classList.add("bad");
+    feedbackText.textContent = `❌ ยังไม่ถูก — คำตอบที่ถูกคือ ${q.correctKey} (${q.options[q.correctKey]}) · ${q.explain}`;
+  }
+  nextBtn.style.display = "inline-block";
+
+  if(heartsLeft<=0){
+    setTimeout(showGameOver, NEXT_DELAY_MS);
+  } else {
+    setTimeout(goNext, NEXT_DELAY_MS);
+  }
+}
+
+function handleTimeout(){
+  if(locked) return;
+  locked = true;
+  const q = gameSet[qIndex];
+  heartsLeft--;
+  updateHearts();
+  ["A","B","C"].forEach(k=>optionCards[k].classList.add("locked"));
+  optionCards[q.correctKey].classList.remove("locked");
+  optionCards[q.correctKey].classList.add("correct");
+  feedbackBar.classList.add("bad");
+  feedbackText.textContent = `⏰ หมดเวลา — คำตอบที่ถูกคือ ${q.correctKey} (${q.options[q.correctKey]}) · ${q.explain}`;
+  nextBtn.style.display = "inline-block";
+  if(heartsLeft<=0){
+    setTimeout(showGameOver, NEXT_DELAY_MS);
+  } else {
+    setTimeout(goNext, NEXT_DELAY_MS);
+  }
+}
+
+function updateHearts(){
+  heartsEl.textContent = "❤️".repeat(Math.max(heartsLeft,0)) + "🖤".repeat(3-Math.max(heartsLeft,0));
+}
+
+function goNext(){
+  qIndex++;
+  if(qIndex>=gameSet.length){ showGameOver(true); return; }
+  renderQuestion();
+}
+nextBtn.addEventListener("click", ()=>{ clearTimeout(); goNext(); });
+
+function showGameOver(finished){
+  clearInterval(timerInterval);
+  $("gameOverOverlay").classList.remove("hidden");
+  $("goTitle").textContent = finished ? "สรุปผลการเล่น" : "GAME OVER";
+  $("goEmoji").textContent = finished ? "🏆" : "💔";
+  $("goScore").textContent = score;
+  $("goCorrect").textContent = correctCount;
+  $("goTotal").textContent = gameSet.length;
+}
+
+$("restartBtn").addEventListener("click", ()=>{
+  gameSet = buildGameSet();
+  qIndex=0; score=0; heartsLeft=3; correctCount=0;
+  scoreVal.textContent = 0;
+  updateHearts();
+  $("gameOverOverlay").classList.add("hidden");
+  renderQuestion();
+});
+
+/* ============================================================
+   POSE DETECTION
+   ============================================================ */
+const video = $("video");
+const overlayCanvas = $("overlayCanvas");
+const octx = overlayCanvas.getContext("2d");
+let poseLandmarker = null;
+let lastVideoTime = -1;
+let fps = 0, fpsLastTime = performance.now(), fpsFrames = 0;
+
+async function initPose(){
+  $("loadingText").textContent = "กำลังโหลดโมเดล MediaPipe Pose Landmarker...";
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+  poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    numPoses: 1,
+    minPoseDetectionConfidence: 0.5,
+    minPosePresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+
+  $("loadingText").textContent = "กำลังเปิดกล้อง...";
+  const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:640, height:480 }, audio:false });
+  video.srcObject = stream;
+  await new Promise(res=> video.onloadedmetadata = res);
+  video.play();
+  overlayCanvas.width = video.videoWidth || 640;
+  overlayCanvas.height = video.videoHeight || 480;
+
+  $("loadingOverlay").classList.add("hidden");
+  $("dotCam").classList.add("green");
+  $("camText").textContent = "🟢 กล้องพร้อม";
+  requestAnimationFrame(predictLoop);
+  startCalibration();
+}
+
+let calibrationDone = false;
+let calibProgress = 0;
+function startCalibration(){
+  const fill = $("calibFill");
+  const txt = $("calibStatusText");
+  const startBtn = $("startGameBtn");
+  const tick = ()=>{
+    if(calibrationDone) return;
+    if(lastLandmarks && landmarksVisible(lastLandmarks, [11,12])){
+      calibProgress = Math.min(100, calibProgress+2.5);
+      txt.textContent = "ระบบกำลังตรวจสอบตำแหน่งตัวผู้เล่น...";
+    } else {
+      calibProgress = Math.max(0, calibProgress-3);
+      txt.textContent = "กรุณาเข้ามาอยู่หน้ากล้องให้เห็นไหล่ทั้งสองข้าง";
     }
-
-    /* Game State */
-    let gameState = {
-      questions: [],
-      currentIndex: 0,
-      score: 0,
-      hearts: 3,
-      timer: 30,
-      timerInterval: null,
-      locked: false,
-      isTeacherDebug: false,
-      currentDetectedPose: 'NONE',
-      poseStartTime: 0,
-      requiredHoldTimeMs: 700
-    };
-
-    function initGameEngine() {
-      gameState.questions = generateGameQuestions();
-      gameState.currentIndex = 0;
-      gameState.score = 0;
-      gameState.hearts = 3;
-      updateHeaderUI();
+    fill.style.width = calibProgress+"%";
+    if(calibProgress>=100){
+      calibrationDone = true;
+      txt.textContent = "พร้อมเล่น!";
+      $("calibStatusBig").textContent = "✅";
+      startBtn.style.display = "inline-block";
+      return;
     }
-
-    function startGame() {
-      document.getElementById('calibration-modal').style.display = 'none';
-      loadCurrentQuestion();
-    }
-
-    function bypassCamera() {
-      document.getElementById('calibration-modal').style.display = 'none';
-      document.getElementById('cam-status-text').innerText = 'โหมดคลิกตอบ';
-      loadCurrentQuestion();
-    }
-
-    function loadCurrentQuestion() {
-      if (gameState.currentIndex >= gameState.questions.length) {
-        endGame(true);
-        return;
-      }
-
-      const q = gameState.questions[gameState.currentIndex];
-      gameState.locked = false;
-
-      document.getElementById('q-counter').innerText = `${gameState.currentIndex + 1}/${gameState.questions.length}`;
-      
-      const diffElem = document.getElementById('difficulty-tag');
-      diffElem.innerText = q.diff === 'easy' ? 'ระดับง่าย' : (q.diff === 'medium' ? 'ระดับปานกลาง' : 'ระดับท้าทาย');
-      diffElem.className = `difficulty-tag diff-${q.diff}`;
-
-      document.getElementById('question-text').innerText = q.text;
-      document.getElementById('math-expr').innerText = q.expr;
-      document.getElementById('sub-question').innerText = q.sub;
-
-      q.options.forEach((opt, idx) => {
-        document.getElementById(`opt-${idx}-val`).innerText = opt.text;
-        const card = document.getElementById(`card-${idx}`);
-        card.className = `option-card card-${idx === 0 ? 'a' : (idx === 1 ? 'b' : 'c')}`;
-        document.getElementById(`fill-${idx}`).style.width = '0%';
-      });
-
-      document.getElementById('explanation-card').style.display = 'none';
-      document.getElementById('btn-next').style.display = 'none';
-
-      startTimer();
-    }
-
-    function startTimer() {
-      clearInterval(gameState.timerInterval);
-      gameState.timer = 30;
-      updateTimerUI();
-
-      gameState.timerInterval = setInterval(() => {
-        if (gameState.locked) return;
-        gameState.timer--;
-        updateTimerUI();
-
-        if (gameState.timer <= 0) {
-          clearInterval(gameState.timerInterval);
-          handleTimeout();
-        }
-      }, 1000);
-    }
-
-    function updateTimerUI() {
-      const timerVal = document.getElementById('timer-val');
-      const timerBadge = document.getElementById('timer-badge');
-      timerVal.innerText = gameState.timer;
-
-      if (gameState.timer <= 10) {
-        timerBadge.classList.add('timer-warning');
-      } else {
-        timerBadge.classList.remove('timer-warning');
-      }
-    }
-
-    function handleTimeout() {
-      if (gameState.locked) return;
-      gameState.locked = true;
-
-      gameState.hearts--;
-      updateHeaderUI();
-
-      showFeedback(false, "⏰ หมดเวลา!", gameState.questions[gameState.currentIndex].exp);
-
-      if (gameState.hearts <= 0) {
-        setTimeout(() => endGame(false), 2000);
-      } else {
-        setTimeout(() => nextQuestion(), 2500);
-      }
-    }
-
-    function handleAnswerSelection(selectedIndex) {
-      if (gameState.locked) return;
-      gameState.locked = true;
-      clearInterval(gameState.timerInterval);
-
-      const q = gameState.questions[gameState.currentIndex];
-      const isCorrect = (selectedIndex === q.correctOptionIndex);
-
-      for (let i = 0; i < 3; i++) {
-        const card = document.getElementById(`card-${i}`);
-        if (i === q.correctOptionIndex) {
-          card.classList.add('selected-correct');
-        } else if (i === selectedIndex && !isCorrect) {
-          card.classList.add('selected-wrong');
-        }
-      }
-
-      if (isCorrect) {
-        gameState.score += 100;
-        updateHeaderUI();
-        showFeedback(true, "🎉 ถูกต้อง! +100 คะแนน", q.exp);
-      } else {
-        gameState.hearts--;
-        updateHeaderUI();
-        showFeedback(false, "❌ ยังไม่ถูกต้อง", q.exp);
-      }
-
-      if (gameState.hearts <= 0) {
-        setTimeout(() => endGame(false), 2200);
-      } else {
-        setTimeout(() => nextQuestion(), 2200);
-      }
-    }
-
-    function selectOptionManual(idx) {
-      if (!gameState.locked) handleAnswerSelection(idx);
-    }
-
-    function showFeedback(isCorrect, title, detail) {
-      const card = document.getElementById('explanation-card');
-      card.className = `explanation-card ${isCorrect ? 'correct' : 'wrong'}`;
-      document.getElementById('exp-title').innerText = title;
-      document.getElementById('exp-detail').innerText = detail;
-      card.style.display = 'block';
-
-      document.getElementById('btn-next').style.display = 'inline-block';
-    }
-
-    function nextQuestion() {
-      if (gameState.currentIndex < gameState.questions.length - 1) {
-        gameState.currentIndex++;
-        loadCurrentQuestion();
-      } else {
-        endGame(true);
-      }
-    }
-
-    function updateHeaderUI() {
-      document.getElementById('score-val').innerText = gameState.score;
-      let heartsStr = '';
-      for (let i = 0; i < 3; i++) heartsStr += i < gameState.hearts ? '❤️' : '🖤';
-      document.getElementById('hearts-container').innerText = heartsStr;
-    }
-
-    function endGame(isVictory) {
-      clearInterval(gameState.timerInterval);
-      const modal = document.getElementById('game-over-modal');
-      const title = document.getElementById('go-title');
-      const desc = document.getElementById('go-desc');
-
-      if (isVictory) {
-        title.innerText = "🎉 ยินดีด้วย! จบเกม";
-        title.style.color = "var(--success)";
-        desc.innerText = "คุณมีความเชี่ยวชาญในทฤษฎีบทเศษเหลือ!";
-      } else {
-        title.innerText = "GAME OVER";
-        title.style.color = "var(--danger)";
-        desc.innerText = "หัวใจหมดแล้ว! ลองใหม่อีกครั้งนะ";
-      }
-
-      document.getElementById('final-score').innerText = gameState.score;
-      modal.style.display = 'flex';
-    }
-
-    function restartGame() {
-      document.getElementById('game-over-modal').style.display = 'none';
-      initGameEngine();
-      loadCurrentQuestion();
-    }
-
-    function toggleTeacherDebug() {
-      gameState.isTeacherDebug = !gameState.isTeacherDebug;
-      document.getElementById('debug-panel').style.display = gameState.isTeacherDebug ? 'block' : 'none';
-    }
-
-    /* MediaPipe Camera Setup */
-    let poseLandmarker;
-    let video;
-    let canvasElement;
-    let canvasCtx;
-    let lastVideoTime = -1;
-    let lastFrameTime = performance.now();
-    let fps = 0;
-
-    async function setupCameraAI() {
-      video = document.getElementById('webcam');
-      canvasElement = document.getElementById('output_canvas');
-      canvasCtx = canvasElement.getContext('2d');
-
-      const msg = document.getElementById('calib-status-msg');
-      msg.innerText = "⏳ กำลังโหลดระบบ AI และเปิดใช้งานกล้อง...";
-      msg.style.color = "var(--accent-a)";
-      document.getElementById('btn-retry-cam').style.display = 'none';
-
-      try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-        );
-
-        poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
-            delegate: "GPU"
-          },
-          runningMode: "VIDEO",
-          numPoses: 1
-        });
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 }
-        });
-        video.srcObject = stream;
-        await video.play();
-
-        document.getElementById('cam-status-dot').className = 'status-dot active';
-        document.getElementById('cam-status-text').innerText = 'กล้องพร้อมใช้งาน';
-        
-        msg.innerText = "🟢 AI พร้อมแล้ว! ยืนตำแหน่งแล้วกดเริ่มเกมได้เลย";
-        msg.style.color = 'var(--success)';
-        document.getElementById('btn-start-game').disabled = false;
-        
-        requestAnimationFrame(predictWebcamFrame);
-
-      } catch (err) {
-        console.error("Camera/AI Error:", err);
-        document.getElementById('cam-status-dot').className = 'status-dot warning';
-        document.getElementById('cam-status-text').innerText = 'ไม่สามารถเปิดกล้องได้';
-        msg.innerText = "❌ ไม่สามารถเข้าถึงกล้องได้ คุณยังสามารถเล่นโดยใช้การคลิกเลือกได้";
-        msg.style.color = "var(--danger)";
-        document.getElementById('btn-retry-cam').style.display = 'block';
-      }
-    }
-
-    function retryCamera() {
-      setupCameraAI();
-    }
-
-    async function predictWebcamFrame() {
-      const now = performance.now();
-      fps = Math.round(1000 / (now - lastFrameTime));
-      lastFrameTime = now;
-
-      canvasElement.width = video.videoWidth || 640;
-      canvasElement.height = video.videoHeight || 480;
-
-      if (poseLandmarker && video.currentTime !== lastVideoTime) {
-        lastVideoTime = video.currentTime;
-        const poseResults = poseLandmarker.detectForVideo(video, now);
-
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
-        let detectedPose = 'NONE';
-        let targetIndex = -1;
-
-        if (poseResults.landmarks && poseResults.landmarks.length > 0) {
-          const landmarks = poseResults.landmarks[0];
-          
-          // MediaPipe Pose Landmark Indices:
-          // 11: Left Shoulder, 12: Right Shoulder
-          // 15: Left Wrist,    16: Right Wrist
-          const leftShoulder = landmarks[11];
-          const rightShoulder = landmarks[12];
-          const leftWrist = landmarks[15];
-          const rightWrist = landmarks[16];
-
-          // Check if hands are raised above shoulder level (Y goes 0 at top to 1 at bottom)
-          const isLeftRaised = leftWrist && leftShoulder && (leftWrist.y < leftShoulder.y - 0.05);
-          const isRightRaised = rightWrist && rightShoulder && (rightWrist.y < rightShoulder.y - 0.05);
-
-          if (isLeftRaised && isRightRaised) {
-            detectedPose = 'BOTH_RAISED'; // Option C
-            targetIndex = 2;
-          } else if (isLeftRaised) {
-            detectedPose = 'LEFT_RAISED'; // Option A
-            targetIndex = 0;
-          } else if (isRightRaised) {
-            detectedPose = 'RIGHT_RAISED'; // Option B
-            targetIndex = 1;
-          }
-
-          // Draw skeleton points on canvas
-          drawSkeleton(landmarks);
-
-          // Update debug info
-          if (gameState.isTeacherDebug) {
-            document.getElementById('db-fps').innerText = fps;
-            document.getElementById('db-conf').innerText = poseResults.segmentationMasks ? 'High' : 'Normal';
-            document.getElementById('db-lw').innerText = leftWrist ? leftWrist.y.toFixed(2) : '-';
-            document.getElementById('db-ls').innerText = leftShoulder ? leftShoulder.y.toFixed(2) : '-';
-            document.getElementById('db-rw').innerText = rightWrist ? rightWrist.y.toFixed(2) : '-';
-            document.getElementById('db-rs').innerText = rightShoulder ? rightShoulder.y.toFixed(2) : '-';
-            document.getElementById('db-pose').innerText = detectedPose;
-            document.getElementById('db-sel').innerText = targetIndex;
-            
-            const currentQ = gameState.questions[gameState.currentIndex];
-            document.getElementById('db-correct').innerText = currentQ ? currentQ.correctOptionIndex : '-';
-          }
-        }
-
-        canvasCtx.restore();
-
-        // Process detected pose & progress timer
-        processPoseSelection(detectedPose, targetIndex);
-      }
-
-      requestAnimationFrame(predictWebcamFrame);
-    }
-
-    function drawSkeleton(landmarks) {
-      canvasCtx.fillStyle = "#38bdf8";
-      canvasCtx.strokeStyle = "#818cf8";
-      canvasCtx.lineWidth = 3;
-
-      const connections = [
-        [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // Upper body
-        [11, 23], [12, 24], [23, 24]                      // Torso
-      ];
-
-      connections.forEach(([i, j]) => {
-        if (landmarks[i] && landmarks[j]) {
-          canvasCtx.beginPath();
-          canvasCtx.moveTo(landmarks[i].x * canvasElement.width, landmarks[i].y * canvasElement.height);
-          canvasCtx.lineTo(landmarks[j].x * canvasElement.width, landmarks[j].y * canvasElement.height);
-          canvasCtx.stroke();
-        }
-      });
-
-      landmarks.forEach((lm) => {
-        if (lm.visibility > 0.5) {
-          canvasCtx.beginPath();
-          canvasCtx.arc(lm.x * canvasElement.width, lm.y * canvasElement.height, 5, 0, 2 * Math.PI);
-          canvasCtx.fill();
-        }
-      });
-    }
-
-    function processPoseSelection(detectedPose, targetIndex) {
-      const poseBadge = document.getElementById('detected-pose-badge');
-      let poseText = 'ไม่มีการค้างท่า';
-      if (detectedPose === 'LEFT_RAISED') poseText = '🫲 ยกมือซ้าย (A)';
-      if (detectedPose === 'RIGHT_RAISED') poseText = '🫱 ยกมือขวา (B)';
-      if (detectedPose === 'BOTH_RAISED') poseText = '🙌 ยกสองมือ (C)';
-      poseBadge.innerText = `ท่าทาง: ${poseText}`;
-
-      if (gameState.locked) return;
-
-      if (detectedPose !== 'NONE' && targetIndex !== -1) {
-        if (gameState.currentDetectedPose === detectedPose) {
-          const elapsedTime = performance.now() - gameState.poseStartTime;
-          const progressPercent = Math.min(100, (elapsedTime / gameState.requiredHoldTimeMs) * 100);
-
-          updateCardHighlightAndFill(targetIndex, progressPercent);
-
-          if (elapsedTime >= gameState.requiredHoldTimeMs) {
-            handleAnswerSelection(targetIndex);
-            resetHoldProgress();
-          }
-        } else {
-          gameState.currentDetectedPose = detectedPose;
-          gameState.poseStartTime = performance.now();
-          resetHoldProgress();
-        }
-      } else {
-        gameState.currentDetectedPose = 'NONE';
-        resetHoldProgress();
-      }
-    }
-
-    function updateCardHighlightAndFill(selectedIndex, fillPercent) {
-      for (let i = 0; i < 3; i++) {
-        const card = document.getElementById(`card-${i}`);
-        const fill = document.getElementById(`fill-${i}`);
-
-        if (i === selectedIndex) {
-          card.classList.add('detected');
-          fill.style.width = `${fillPercent}%`;
-        } else {
-          card.classList.remove('detected');
-          fill.style.width = '0%';
-        }
-      }
-    }
-
-    function resetHoldProgress() {
-      for (let i = 0; i < 3; i++) {
-        const card = document.getElementById(`card-${i}`);
-        const fill = document.getElementById(`fill-${i}`);
-        card.classList.remove('detected');
-        fill.style.width = '0%';
-      }
-    }
-
-    // Bind Functions to Global Window Object for HTML Event Handlers
-    window.startGame = startGame;
-    window.bypassCamera = bypassCamera;
-    window.retryCamera = retryCamera;
-    window.selectOptionManual = selectOptionManual;
-    window.nextQuestion = nextQuestion;
-    window.restartGame = restartGame;
-    window.toggleTeacherDebug = toggleTeacherDebug;
-
-    // Initialization on Page Load
-    initGameEngine();
-    setupCameraAI();
-  </script>
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+$("startGameBtn").addEventListener("click", ()=>{
+  $("calibOverlay").classList.add("hidden");
+  gameSet = buildGameSet();
+  renderQuestion();
+});
+
+let lastLandmarks = null;
+
+function landmarksVisible(lm, indices, minVis=0.4){
+  return indices.every(i => lm[i] && (lm[i].visibility===undefined || lm[i].visibility>minVis));
+}
+
+function predictLoop(){
+  if(poseLandmarker && video.readyState>=2 && video.currentTime !== lastVideoTime){
+    lastVideoTime = video.currentTime;
+    const result = poseLandmarker.detectForVideo(video, performance.now());
+    processResult(result);
+  }
+  fpsFrames++;
+  const now = performance.now();
+  if(now - fpsLastTime > 500){
+    fps = Math.round((fpsFrames*1000)/(now-fpsLastTime));
+    fpsFrames = 0; fpsLastTime = now;
+  }
+  requestAnimationFrame(predictLoop);
+}
+
+function processResult(result){
+  octx.clearRect(0,0,overlayCanvas.width, overlayCanvas.height);
+  if(!result.landmarks || result.landmarks.length===0){
+    lastLandmarks = null;
+    $("dotPlayer").classList.remove("green");
+    $("playerText").textContent = "กรุณาเข้ามาอยู่หน้ากล้อง";
+    $("poseFlag").textContent = "🕐 ไม่พบผู้เล่น";
+    candidatePose = null;
+    return;
+  }
+  const lm = result.landmarks[0];
+  lastLandmarks = lm;
+  $("dotPlayer").classList.add("green");
+  $("playerText").textContent = "🟢 พบผู้เล่น";
+
+  const haveShoulders = landmarksVisible(lm,[11,12]);
+  const haveWrists = landmarksVisible(lm,[15,16]);
+  if(!haveShoulders){
+    $("camNote").textContent = "กรุณาเข้ามาอยู่หน้ากล้อง";
+  } else if(!haveWrists){
+    $("camNote").textContent = "กรุณาให้มืออยู่ในภาพ";
+  } else {
+    $("camNote").textContent = "";
+  }
+
+  drawSkeleton(lm);
+
+  if(!haveShoulders || !haveWrists){
+    candidatePose = null;
+    updateDebug(lm, null, "-");
+    return;
+  }
+
+  const leftShoulderY = lm[11].y, rightShoulderY = lm[12].y;
+  const leftWristY = lm[15].y, rightWristY = lm[16].y;
+  const leftUp = leftWristY < leftShoulderY - ANGLE_THRESHOLD;
+  const rightUp = rightWristY < rightShoulderY - ANGLE_THRESHOLD;
+
+  let pose = null;
+  if(leftUp && rightUp) pose = "C";       // check C first
+  else if(leftUp) pose = "A";
+  else if(rightUp) pose = "B";
+
+  $("poseFlag").textContent = pose ? { A:"🫲 ตรวจพบ A", B:"🫱 ตรวจพบ B", C:"🙌 ตรวจพบ C" }[pose] : "🕐 กำลังตรวจจับ";
+
+  handlePoseCandidate(pose);
+  updateDebug(lm, pose, {leftShoulderY,rightShoulderY,leftWristY,rightWristY});
+}
+
+function drawSkeleton(lm){
+  const w = overlayCanvas.width, h = overlayCanvas.height;
+  const pts = [11,12,13,14,15,16];
+  octx.fillStyle = "#2dd4bf";
+  pts.forEach(i=>{
+    const p = lm[i];
+    if(!p) return;
+    octx.beginPath();
+    octx.arc(p.x*w, p.y*h, 5, 0, Math.PI*2);
+    octx.fill();
+  });
+  octx.strokeStyle = "rgba(45,212,191,0.6)";
+  octx.lineWidth = 3;
+  const pairs = [[11,12],[11,13],[13,15],[12,14],[14,16]];
+  pairs.forEach(([a,b])=>{
+    if(!lm[a]||!lm[b]) return;
+    octx.beginPath();
+    octx.moveTo(lm[a].x*w, lm[a].y*h);
+    octx.lineTo(lm[b].x*w, lm[b].y*h);
+    octx.stroke();
+  });
+}
+
+function handlePoseCandidate(pose){
+  if(locked || !calibrationDone) return;
+  ["A","B","C"].forEach(k=>optionCards[k].classList.remove("hold"));
+  if(!pose){
+    candidatePose = null; candidateStart = 0;
+    ["A","B","C"].forEach(k=>optionCards[k].querySelector(".holdBar").style.width="0%");
+    return;
+  }
+  const now = performance.now();
+  if(candidatePose !== pose){
+    candidatePose = pose;
+    candidateStart = now;
+  }
+  const held = now - candidateStart;
+  const pct = Math.min(100, (held/HOLD_MS)*100);
+  optionCards[pose].classList.add("hold");
+  optionCards[pose].querySelector(".holdBar").style.width = pct+"%";
+  if(held >= HOLD_MS){
+    confirmAnswer(pose);
+  }
+}
+
+/* ============================================================
+   DEBUG PANEL
+   ============================================================ */
+function updateDebug(lm, pose, ys){
+  if(!debugOn) return;
+  $("dbgFps").textContent = fps;
+  $("dbgConf").textContent = lm && lm[0] && lm[0].visibility!==undefined ? lm[0].visibility.toFixed(2) : "n/a";
+  if(ys && ys!=="-"){
+    $("dbgLW").textContent = ys.leftWristY.toFixed(3);
+    $("dbgRW").textContent = ys.rightWristY.toFixed(3);
+    $("dbgLS").textContent = ys.leftShoulderY.toFixed(3);
+    $("dbgRS").textContent = ys.rightShoulderY.toFixed(3);
+  }
+  $("dbgPose").textContent = pose || "-";
+  const q = gameSet[qIndex];
+  $("dbgSel").textContent = candidatePose || "-";
+  $("dbgCorrect").textContent = q ? q.correctKey : "-";
+  $("dbgTimer").textContent = timerLeft+"s";
+  $("dbgCalib").textContent = calibrationDone ? "done" : `${calibProgress.toFixed(0)}%`;
+}
+
+$("toggleDebug").addEventListener("click", ()=>{
+  debugOn = !debugOn;
+  $("debugPanel").classList.toggle("show", debugOn);
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+updateHearts();
+initPose().catch(err=>{
+  $("loadingText").textContent = "ไม่สามารถเข้าถึงกล้องหรือโหลดโมเดลได้: " + err.message;
+  console.error(err);
+});
+</script>
 </body>
 </html>
